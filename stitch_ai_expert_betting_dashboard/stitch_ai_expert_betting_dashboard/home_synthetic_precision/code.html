@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Synthetic Precision - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#005321",
+                        "primary-fixed-dim": "#7bd0ff",
+                        "tertiary": "#52e87c",
+                        "surface-container-lowest": "#0a0f12",
+                        "background": "#0f1417",
+                        "inverse-on-surface": "#2c3134",
+                        "on-secondary-container": "#4f3100",
+                        "on-surface-variant": "#bdc8d1",
+                        "surface-variant": "#313539",
+                        "tertiary-fixed": "#6bff8f",
+                        "surface-tint": "#7bd0ff",
+                        "primary-container": "#38bdf8",
+                        "primary-fixed": "#c4e7ff",
+                        "error-container": "#93000a",
+                        "on-secondary": "#452b00",
+                        "secondary-container": "#dc9100",
+                        "surface-container": "#1b2023",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-secondary-fixed": "#291800",
+                        "on-tertiary": "#003915",
+                        "on-secondary-fixed-variant": "#633f00",
+                        "on-primary-fixed": "#001e2c",
+                        "surface-container-low": "#171c1f",
+                        "on-tertiary-fixed": "#002109",
+                        "primary": "#8ed5ff",
+                        "outline": "#87929a",
+                        "secondary-fixed-dim": "#ffb955",
+                        "surface-container-high": "#262b2e",
+                        "on-surface": "#dfe3e7",
+                        "secondary": "#ffb955",
+                        "inverse-primary": "#00668a",
+                        "secondary-fixed": "#ffddb4",
+                        "error": "#ffb4ab",
+                        "on-primary": "#00354a",
+                        "on-primary-container": "#004965",
+                        "on-tertiary-container": "#004f20",
+                        "on-error": "#690005",
+                        "surface-dim": "#0f1417",
+                        "surface-container-highest": "#313539",
+                        "on-primary-fixed-variant": "#004c69",
+                        "inverse-surface": "#dfe3e7",
+                        "on-background": "#dfe3e7",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#3e484f",
+                        "surface": "#0f1417",
+                        "surface-bright": "#353a3d",
+                        "tertiary-container": "#2ccb63"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-padding": "32px",
+                        "section-gap": "48px",
+                        "card-gap": "16px",
+                        "gutter": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "data-lg": ["JetBrains Mono"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "data-sm": ["14px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-lg": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0F17; /* Defined Level 0 Background */
+            color: #dfe3e7;
+        }
+        .surface-card {
+            background-color: #151A24; /* Defined Level 1 Surface */
+            border: 1px solid #1E293B;
+        }
+        .surface-hover:hover {
+            background-color: #1F2937; /* Defined Level 2 Overlay */
+        }
+        /* Hide scrollbar for horizontal scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen pb-24 md:pb-0 pt-16 md:pt-24 flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flex items-center justify-between px-container-padding h-16 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary dark:text-primary">analytics</span>
+<span class="text-headline-sm font-headline-sm text-primary dark:text-primary tracking-tight font-extrabold uppercase">Synthetic Precision</span>
+</div>
+<!-- Desktop Nav Cluster (hidden on mobile) -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-primary font-bold hover:bg-surface-variant transition-colors rounded-full px-4 py-2 text-label-caps font-label-caps" href="#">Home</a>
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors rounded-full px-4 py-2 text-label-caps font-label-caps" href="#">Picks</a>
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors rounded-full px-4 py-2 text-label-caps font-label-caps" href="#">Results</a>
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors rounded-full px-4 py-2 text-label-caps font-label-caps" href="#">Account</a>
+</nav>
+<button class="text-primary dark:text-primary font-label-caps text-label-caps active:scale-95 transition-transform hover:bg-surface-variant px-4 py-2 rounded-lg">Join</button>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-[1200px] mx-auto px-4 md:px-container-padding flex flex-col gap-section-gap pt-8">
+<!-- Hero Section -->
+<section class="flex flex-col items-center text-center gap-6 md:mt-12">
+<h1 class="font-display-lg text-display-lg text-on-surface max-w-4xl tracking-tighter">
+                Elite AI + Expert <span class="text-primary">Football Insights</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                Transparency is our track record. Precise predictions powered by data and expertise.
+            </p>
+<div class="flex gap-4 mt-4">
+<button class="bg-primary text-on-primary font-label-caps text-label-caps px-6 py-3 rounded-lg hover:bg-primary-fixed transition-colors active:scale-95 shadow-[0_0_15px_rgba(56,189,248,0.3)] border border-primary">
+                    Get Today's Picks
+                </button>
+<button class="surface-card text-on-surface font-label-caps text-label-caps px-6 py-3 rounded-lg hover:bg-surface-variant transition-colors active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_circle</span> Watch Demo
+                </button>
+</div>
+</section>
+<!-- Trust Signal Summary Strip -->
+<section class="w-full flex justify-center">
+<div class="surface-card rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-8 w-full max-w-3xl">
+<div class="flex items-center gap-4 w-full md:w-1/2">
+<div class="h-12 w-12 rounded-full border border-primary flex items-center justify-center bg-primary/10">
+<span class="material-symbols-outlined text-primary">memory</span>
+</div>
+<div>
+<div class="font-data-lg text-data-lg text-primary">61.4%</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">AI Accuracy Season-to-date</div>
+</div>
+</div>
+<div class="hidden md:block w-px h-12 bg-outline-variant"></div>
+<div class="flex items-center gap-4 w-full md:w-1/2 justify-start md:justify-end">
+<div class="text-left md:text-right">
+<div class="font-data-lg text-data-lg text-secondary">78.2%</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">ROI on Expert Picks</div>
+</div>
+<div class="h-12 w-12 rounded-full border border-secondary flex items-center justify-center bg-secondary/10 overflow-hidden relative">
+<!-- Simulated Avatar -->
+<div class="w-full h-full bg-cover bg-center opacity-70" data-alt="A macro shot of a sleek, dark metallic surface with extremely subtle brushed textures. The surface is barely illuminated by a cool, dim blue side-light, representing professional analytical precision. Minimalist, high-contrast, moody aesthetic, suitable for a dark-mode professional dashboard avatar mask." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJNRmjwfPlXjKuJRO_LTqHy30LzS3P1UXDroGVvSDuCZ8vO6lI6UF62aLs7zNh1gRrrr5dgIQh7jjs8Va3bEy_MooR4w_YLke6YKL93IPU3gpy73OjhRwt443sbPaxtZelM2tJyUoo3XkjNTNgrXobK34qimD-Mgb7cVu6LUGqPhiNTWJ_zzMrfFpUV86w_Mr-CBa3RfM54498JTolmkv7DFZuKcc2pDyxhdaTMu8ToHCV6nyWIYn2')"></div>
+<span class="material-symbols-outlined text-secondary absolute z-10 text-[20px]">psychology</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Today's Featured Fixtures -->
+<section class="flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">schedule</span> Today's Featured Fixtures
+                </h2>
+<a class="font-label-caps text-label-caps text-primary hover:text-primary-fixed transition-colors flex items-center gap-1" href="#">
+                    View All <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<!-- Horizontal Scroll Container -->
+<div class="flex overflow-x-auto gap-4 pb-4 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 snap-x">
+<!-- Fixture Card 1 (AI Pick) -->
+<div class="surface-card rounded-xl min-w-[280px] p-5 flex flex-col gap-4 snap-start relative overflow-hidden group">
+<!-- Subtle AI Glow -->
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start">
+<div class="font-label-caps text-label-caps text-on-surface-variant">15:00 GMT</div>
+<!-- AI Badge -->
+<div class="flex items-center gap-1 border border-primary rounded-full px-2 py-0.5 bg-primary/10 h-6">
+<span class="material-symbols-outlined text-[12px] text-primary">memory</span>
+<span class="font-label-caps text-label-caps text-primary text-[10px]">AI Pick</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center border border-outline-variant">
+<span class="font-label-caps text-label-caps">ARS</span>
+</div>
+</div>
+<div class="font-data-sm text-data-sm text-on-surface-variant">vs</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center border border-outline-variant">
+<span class="font-label-caps text-label-caps">LIV</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Home Win Prob.</span>
+<span class="font-data-lg text-data-lg text-on-surface">42.5%</span>
+</div>
+<!-- Confidence Bar -->
+<div class="w-full h-1 bg-[#1F2937] rounded-full overflow-hidden mt-1">
+<div class="h-full bg-gradient-to-r from-tertiary to-secondary" style="width: 42.5%;"></div>
+</div>
+</div>
+<!-- Fixture Card 2 (Expert Pick) -->
+<div class="surface-card rounded-xl min-w-[280px] p-5 flex flex-col gap-4 snap-start relative overflow-hidden group">
+<div class="flex justify-between items-start">
+<div class="font-label-caps text-label-caps text-on-surface-variant">17:30 GMT</div>
+<!-- Expert Badge -->
+<div class="flex items-center gap-1 border border-secondary rounded-full pl-0.5 pr-2 py-0.5 bg-secondary/10 h-6">
+<div class="w-5 h-5 rounded-full bg-surface-variant overflow-hidden border border-outline-variant">
+<div class="w-full h-full bg-cover bg-center" data-alt="A microscopic close-up of a carbon fiber weave, illuminated by a warm amber sidelight against deep shadows. High contrast, technical aesthetic, symbolizing expert structural analysis. Suitable for a dark-mode dashboard avatar mask." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAcynrGrODMilHawTPMWd6uvOrga1yTwoyapj6QTkOXk43YYtb7KqspYMGWeJtWKz4_DbvO7w20od1s1b7MsLNao4ZTyjOosdyjjPVyOHvPbfig5dHQyRkw0HkDIU5Y3eGcgM240KLoB3bT27Tp98qvtvOA0a4lfkbXRaQpIqOSFGREhfdvUvElU_3U5k15Xxl-ULLVwf6TSVEpDEjj8rS3BWlLiWwdx-3oMKWjPN1eitYj8pevtpZF')"></div>
+</div>
+<span class="font-label-caps text-label-caps text-secondary text-[10px]">Smith</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center border border-outline-variant">
+<span class="font-label-caps text-label-caps">MCI</span>
+</div>
+</div>
+<div class="font-data-sm text-data-sm text-on-surface-variant">vs</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center border border-outline-variant">
+<span class="font-label-caps text-label-caps">CHE</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Value Bet</span>
+<span class="font-data-lg text-data-lg text-on-surface">+185</span>
+</div>
+<!-- Confidence Bar -->
+<div class="w-full h-1 bg-[#1F2937] rounded-full overflow-hidden mt-1">
+<div class="h-full bg-secondary" style="width: 75%;"></div>
+</div>
+</div>
+<!-- Fixture Card 3 (Locked) -->
+<div class="surface-card rounded-xl min-w-[280px] p-5 flex flex-col gap-4 snap-start relative overflow-hidden">
+<div class="flex justify-between items-start blur-[4px] opacity-50">
+<div class="font-label-caps text-label-caps text-on-surface-variant">20:00 GMT</div>
+<div class="flex items-center gap-1 border border-primary rounded-full px-2 py-0.5 bg-primary/10 h-6">
+<span class="material-symbols-outlined text-[12px] text-primary">memory</span>
+<span class="font-label-caps text-label-caps text-primary text-[10px]">AI Pick</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 blur-[4px] opacity-50">
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center border border-outline-variant">
+<span class="font-label-caps text-label-caps">TOT</span>
+</div>
+</div>
+<div class="font-data-sm text-data-sm text-on-surface-variant">vs</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center border border-outline-variant">
+<span class="font-label-caps text-label-caps">NEW</span>
+</div>
+</div>
+</div>
+<!-- Locked Overlay Content -->
+<div class="absolute inset-0 flex items-center justify-center bg-[#151A24]/60 backdrop-blur-[2px]">
+<button class="bg-[#F1F5F9] text-[#0B0F17] font-label-caps text-label-caps px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-white active:scale-95 transition-all shadow-lg">
+<span class="material-symbols-outlined text-[16px]">lock</span> Unlock Analysis
+                        </button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 bg-surface-container dark:bg-surface-container flex justify-around items-center px-4 py-3 border-t-0 pb-safe">
+<!-- Active Tab: Home -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps text-primary font-bold mt-1 text-[10px]">Home</span>
+</a>
+<!-- Inactive Tabs -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform px-4 py-1" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="font-label-caps text-label-caps mt-1 text-[10px]">Picks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform px-4 py-1" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-caps text-label-caps mt-1 text-[10px]">Results</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform px-4 py-1" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps mt-1 text-[10px]">Account</span>
+</a>
+</nav>
+<!-- CSS specific for mobile bottom nav padding -->
+<style>
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .pb-safe {
+                padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</body></html>

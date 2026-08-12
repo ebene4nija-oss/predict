@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Match Preview - Prophet AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#52e87c",
+                        "surface-tint": "#7bd0ff",
+                        "primary": "#8ed5ff",
+                        "surface-container-highest": "#313539",
+                        "surface-variant": "#313539",
+                        "on-tertiary": "#003915",
+                        "on-primary-fixed-variant": "#004c69",
+                        "secondary-fixed": "#ffddb4",
+                        "primary-fixed-dim": "#7bd0ff",
+                        "tertiary-container": "#2ccb63",
+                        "surface-bright": "#353a3d",
+                        "on-background": "#dfe3e7",
+                        "inverse-on-surface": "#2c3134",
+                        "secondary-container": "#dc9100",
+                        "on-surface-variant": "#bdc8d1",
+                        "on-secondary": "#452b00",
+                        "primary-container": "#38bdf8",
+                        "on-surface": "#dfe3e7",
+                        "surface-container-low": "#171c1f",
+                        "background": "#0f1417",
+                        "on-primary-fixed": "#001e2c",
+                        "surface-container": "#1b2023",
+                        "on-tertiary-fixed": "#002109",
+                        "inverse-surface": "#dfe3e7",
+                        "tertiary-fixed": "#6bff8f",
+                        "error-container": "#93000a",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "surface-container-lowest": "#0a0f12",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "inverse-primary": "#00668a",
+                        "surface-dim": "#0f1417",
+                        "surface": "#0f1417",
+                        "on-error": "#690005",
+                        "secondary": "#ffb955",
+                        "on-secondary-container": "#4f3100",
+                        "secondary-fixed-dim": "#ffb955",
+                        "on-tertiary-container": "#004f20",
+                        "surface-container-high": "#262b2e",
+                        "outline": "#87929a",
+                        "primary-fixed": "#c4e7ff",
+                        "on-primary": "#00354a",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed-variant": "#633f00",
+                        "on-secondary-fixed": "#291800",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#004965",
+                        "outline-variant": "#3e484f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "container-padding": "32px",
+                        "card-gap": "16px",
+                        "unit": "4px",
+                        "section-gap": "48px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-lg": ["JetBrains Mono"],
+                        "headline-sm": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-sm": ["14px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-lg": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .bg-surface-glass { background-color: rgba(21, 26, 36, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .gradient-prob-bar { background: linear-gradient(90deg, #22c55e 0%, #ef4444 100%); }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col font-body-lg text-body-lg">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background w-full top-0 sticky border-b border-outline-variant z-40">
+<div class="flex items-center justify-between px-gutter h-16 w-full max-w-[1200px] mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-display-lg text-display-lg font-bold tracking-tighter text-primary text-2xl">PROPHET AI</span>
+</div>
+<nav class="hidden md:flex gap-6">
+<a class="text-primary hover:bg-surface-container-high transition-colors px-3 py-2 rounded-lg active:opacity-80" href="#">Matches</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2 rounded-lg active:opacity-80 hover:text-primary transition-all" href="#">Top Picks</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2 rounded-lg active:opacity-80 hover:text-primary transition-all" href="#">Experts</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-[1200px] mx-auto px-4 md:px-gutter py-8 md:py-12 mb-20 md:mb-0">
+<!-- Back Navigation (Contextual) -->
+<div class="mb-6 flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer w-fit">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span class="font-label-caps text-label-caps uppercase">Back to Matches</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-card-gap">
+<!-- Left Column: Match Header & Insight -->
+<div class="lg:col-span-7 flex flex-col gap-card-gap">
+<!-- Match Header Card -->
+<div class="bg-surface-glass border border-outline-variant rounded-xl p-6 md:p-8 relative overflow-hidden flex flex-col items-center text-center">
+<!-- Subtle AI Glow background effect -->
+<div class="absolute inset-0 bg-primary/5 blur-[100px] pointer-events-none rounded-full w-full h-full transform scale-150"></div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-6 tracking-widest uppercase flex flex-col items-center gap-1 relative z-10">
+<span>Premier League • Matchday 24</span>
+<span class="text-primary flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[14px]">calendar_today</span> Oct 28, 2023 • 15:00 UTC</span>
+<span class="flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[14px]">stadium</span> Emirates Stadium</span>
+</div>
+<div class="flex items-center justify-between w-full max-w-md mx-auto relative z-10 mb-8">
+<!-- Team A -->
+<div class="flex flex-col items-center gap-4 w-1/3">
+<div class="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center overflow-hidden">
+<img alt="Arsenal" class="w-full h-full object-cover" data-alt="A detailed, sleek minimalist logo for a fictional football team in a modern sports analytics context. Deep navy background with subtle electric blue geometric shapes forming a crest. Professional, clean, quant-tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9L_JtVa6ASrL29NYzq9636BREe5kKuc1gDeDGCARz-WB6IKNbnBINR76A7s4Li0xeJXcbENRuSDquNnhKCbQuIqX-UGMl2vX3uOGHedkVb_XNWf-NVO25aqN5B_euj_8zt_qVjIkfwOmelz6w3qyxSmyt-k-mkSqGfERqB6pWznZ0dkX2Em0OjZNPH1CcHJdp8Lg1rmVbWZjSVNeBM5Zf5C9XPzyFFjlZQGcft56ty8V9X_5RNgcl"/>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">ARS</span>
+</div>
+<!-- VS / Score -->
+<div class="flex flex-col items-center justify-center w-1/3">
+<span class="font-display-lg text-display-lg text-primary leading-none">VS</span>
+</div>
+<!-- Team B -->
+<div class="flex flex-col items-center gap-4 w-1/3">
+<div class="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center overflow-hidden">
+<img alt="Man City" class="w-full h-full object-cover" data-alt="A detailed, sleek minimalist logo for a fictional football team in a modern sports analytics context. Deep navy background with subtle amber geometric shapes forming a crest. Professional, clean, quant-tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsbm4gx5BWZhjv-1hnZZN7xgr7NyAJc3FhiCzuBEbywTD-1EpGCiF1jGacQTBx658Lx55iH8OSfcp9wjE51nRsZn620LA9qVWqIVkm7qK6g1rOB8vumT8jnVh3I8RewPXPIXAvbCcpKTzCo555pUI2T6zPfdAFDhXNY866GzbUnYPdC6sH8SZ6dMHEh_3Em7XcLbkbrNsN8bIWGhufEuwiJ9OofOfGyZB-FUPyptdND9uuK2QEmJaJ"/>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">MCI</span>
+</div>
+</div>
+</div>
+<!-- Match Insight (AI Written) -->
+<div class="bg-surface border border-outline-variant rounded-xl p-6 md:p-8 flex flex-col gap-4 relative">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary">psychology</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Match Insight</h2>
+<div class="ml-auto flex items-center gap-1 px-2 py-1 rounded-full border border-primary/30 bg-primary/10">
+<span class="material-symbols-outlined text-primary text-[14px]">memory</span>
+<span class="font-label-caps text-label-caps text-primary uppercase">AI Generated</span>
+</div>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                        Arsenal enters this fixture boasting a formidable home record, unbeaten in their last 8 matches at the Emirates. However, underlying xG data suggests defensive vulnerabilities, conceding 1.4 xGA per 90 in their recent 4 outings. Manchester City's attacking metrics remain dominant, but the confirmed absence of key playmaker Kevin De Bruyne (hamstring) significantly alters their transition speed.
+                    </p>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                        The AI model identifies a high probability of a tightly contested midfield battle, leaning towards a low-scoring first half. Arsenal's aggressive pressing (PPDA 8.2) is expected to disrupt City's early build-up, making under 1.5 First Half Goals a highly correlated secondary outcome.
+                    </p>
+<div class="mt-4 pt-4 border-t border-outline-variant flex gap-4">
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Key Metric</span>
+<span class="font-data-sm text-data-sm text-on-surface">ARS xG Diff: +0.8</span>
+</div>
+<div class="w-[1px] h-full bg-outline-variant"></div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Key Absence</span>
+<span class="font-data-sm text-data-sm text-on-surface">MCI: K. De Bruyne</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: AI Prediction Markets -->
+<div class="lg:col-span-5 flex flex-col gap-card-gap">
+<div class="bg-surface border border-outline-variant rounded-xl p-6 flex flex-col h-full">
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">monitoring</span>
+                            AI Prediction Markets
+                        </h2>
+<span class="font-data-sm text-data-sm text-on-surface-variant bg-surface-container-high px-2 py-1 rounded">Model v4.2</span>
+</div>
+<div class="flex flex-col gap-8 flex-grow">
+<!-- Market 1: Match Result (WDL) -->
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<div class="flex items-center gap-2">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Match Winner</span>
+</div>
+</div>
+<!-- Custom WDL Bar -->
+<div class="relative w-full h-8 bg-surface-container-high rounded overflow-hidden flex">
+<!-- Home (Green) -->
+<div class="h-full bg-tertiary-container border-r border-background flex items-center justify-center transition-all duration-500" style="width: 32%;">
+<span class="font-data-sm text-data-sm text-on-tertiary-container z-10 px-1 truncate">ARS 32%</span>
+</div>
+<!-- Draw (Gray) -->
+<div class="h-full bg-surface-variant border-r border-background flex items-center justify-center transition-all duration-500" style="width: 25%;">
+<span class="font-data-sm text-data-sm text-on-surface-variant z-10 px-1 truncate">DRAW 25%</span>
+</div>
+<!-- Away (Red) -->
+<div class="h-full bg-error-container flex items-center justify-center transition-all duration-500" style="width: 43%;">
+<span class="font-data-sm text-data-sm text-on-error-container z-10 px-1 truncate">MCI 43%</span>
+</div>
+</div>
+<div class="flex justify-between text-on-surface-variant font-data-sm text-data-sm opacity-60">
+<span>Home Odds: 3.10</span>
+<span>Away Odds: 2.30</span>
+</div>
+</div>
+<!-- Divider -->
+<div class="h-[1px] w-full bg-outline-variant opacity-50"></div>
+<!-- Market 2: Both Teams to Score (GG) -->
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Both Teams to Score (BTTS)</span>
+<span class="font-data-lg text-data-lg text-primary">68%</span>
+</div>
+<!-- Probability Bar -->
+<div class="relative w-full h-4 bg-surface-container-high rounded overflow-hidden">
+<div class="absolute top-0 left-0 h-full gradient-prob-bar transition-all duration-500" style="width: 68%;"></div>
+<div class="absolute inset-0 border border-outline-variant/30 rounded pointer-events-none"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Yes @ 1.75</span>
+<!-- AI Badge -->
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-primary bg-background h-[24px]">
+<span class="material-symbols-outlined text-primary text-[12px]">memory</span>
+<span class="font-label-caps text-label-caps text-primary text-[10px]">AI PICK</span>
+</div>
+</div>
+</div>
+<!-- Divider -->
+<div class="h-[1px] w-full bg-outline-variant opacity-50"></div>
+<!-- Market 3: Over/Under 2.5 -->
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Total Goals Over 2.5</span>
+<span class="font-data-lg text-data-lg text-primary">54%</span>
+</div>
+<!-- Probability Bar -->
+<div class="relative w-full h-4 bg-surface-container-high rounded overflow-hidden">
+<div class="absolute top-0 left-0 h-full gradient-prob-bar transition-all duration-500 opacity-70" style="width: 54%;"></div>
+<div class="absolute inset-0 border border-outline-variant/30 rounded pointer-events-none"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Over @ 1.95</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Value: Neutral</span>
+</div>
+</div>
+</div>
+<!-- Trust Note -->
+<div class="mt-8 pt-4 border-t border-outline-variant flex items-center justify-center gap-2 text-on-surface-variant opacity-70">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span class="font-label-caps text-label-caps">AI has hit 61% on Premier League BTTS this season.</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 bg-surface-container border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center text-primary font-bold active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">sports_soccer</span>
+<span class="font-label-caps text-label-caps mt-1">Matches</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-caps text-label-caps mt-1">Top Picks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="font-label-caps text-label-caps mt-1">Experts</span>
+</a>
+</nav>
+</body></html>

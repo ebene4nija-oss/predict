@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign Up - Synthetic Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#52e87c",
+                        "primary-container": "#38bdf8",
+                        "outline": "#87929a",
+                        "surface-container-low": "#171c1f",
+                        "on-secondary-container": "#4f3100",
+                        "on-primary-container": "#004965",
+                        "surface-container": "#1b2023",
+                        "surface-container-lowest": "#0a0f12",
+                        "outline-variant": "#3e484f",
+                        "background": "#0f1417",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-tertiary-fixed": "#002109",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "on-primary": "#00354a",
+                        "inverse-on-surface": "#2c3134",
+                        "on-primary-fixed": "#001e2c",
+                        "secondary": "#ffb955",
+                        "inverse-surface": "#dfe3e7",
+                        "surface-tint": "#7bd0ff",
+                        "surface-container-highest": "#313539",
+                        "surface-dim": "#0f1417",
+                        "on-tertiary-container": "#004f20",
+                        "secondary-fixed": "#ffddb4",
+                        "tertiary-container": "#2ccb63",
+                        "on-surface-variant": "#bdc8d1",
+                        "on-primary-fixed-variant": "#004c69",
+                        "surface-variant": "#313539",
+                        "inverse-primary": "#00668a",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#7bd0ff",
+                        "on-surface": "#dfe3e7",
+                        "secondary-fixed-dim": "#ffb955",
+                        "surface-bright": "#353a3d",
+                        "secondary-container": "#dc9100",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-secondary-fixed": "#291800",
+                        "on-secondary": "#452b00",
+                        "on-secondary-fixed-variant": "#633f00",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#003915",
+                        "error-container": "#93000a",
+                        "primary": "#8ed5ff",
+                        "primary-fixed": "#c4e7ff",
+                        "surface-container-high": "#262b2e",
+                        "surface": "#0f1417",
+                        "on-background": "#dfe3e7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "section-gap": "48px",
+                        "container-padding": "32px",
+                        "card-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "data-lg": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-sm": ["14px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "data-lg": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0F17; /* Level 0 Background */
+            color: #dfe3e7; /* on-background */
+        }
+        .surface-card {
+            background-color: #151A24; /* Level 1 Surface */
+            border: 1px solid #1E293B; /* Subtle Outline */
+        }
+        .input-field {
+            background-color: #0B0F17; /* Level 0 for inputs */
+            border: 1px solid #1E293B;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #38bdf8; /* primary-container / Electric Blue */
+            box-shadow: 0 0 0 1px #38bdf8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 antialiased selection:bg-primary selection:text-on-primary">
+<main class="w-full max-w-[440px] surface-card rounded-xl p-8 shadow-2xl relative overflow-hidden">
+<!-- Subtle AI Glow Effect Background -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-primary-container blur-xl opacity-50"></div>
+<div class="text-center mb-8">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#1F2937] border border-[#1E293B] mb-4">
+<span class="material-symbols-outlined text-primary-container" data-icon="analytics" data-weight="fill" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2">Create Account</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Get instant access to elite AI and expert football insights.</p>
+</div>
+<form class="space-y-6" onsubmit="event.preventDefault();">
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="fullName">Full Name</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant text-base" data-icon="person">person</span>
+</span>
+<input class="input-field block w-full pl-10 pr-3 py-3 rounded-lg text-on-surface font-body-sm text-body-sm placeholder-outline" id="fullName" placeholder="Enter your full name" required="" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="email">Email Address</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant text-base" data-icon="mail">mail</span>
+</span>
+<input class="input-field block w-full pl-10 pr-3 py-3 rounded-lg text-on-surface font-body-sm text-body-sm placeholder-outline" id="email" placeholder="you@example.com" required="" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="password">Password</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant text-base" data-icon="lock">lock</span>
+</span>
+<input class="input-field block w-full pl-10 pr-3 py-3 rounded-lg text-on-surface font-body-sm text-body-sm placeholder-outline" id="password" placeholder="••••••••" required="" type="password"/>
+</div>
+<p class="font-body-sm text-xs text-on-surface-variant mt-1">Must be at least 8 characters.</p>
+</div>
+<button class="w-full flex items-center justify-center bg-primary-container text-on-primary-container font-headline-sm text-headline-sm py-3 px-4 rounded-lg hover:bg-primary transition-colors active:scale-95" type="submit">
+<span>Get Started</span>
+<span class="material-symbols-outlined ml-2 text-xl" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</form>
+<div class="mt-8 text-center border-t border-outline-variant pt-6">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Already have an account? 
+                <a class="text-primary hover:text-primary-container font-semibold ml-1 transition-colors" href="#">Sign in</a>
+</p>
+</div>
+</main>
+</body></html>

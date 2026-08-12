@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#52e87c",
+                      "primary-container": "#38bdf8",
+                      "outline": "#87929a",
+                      "surface-container-low": "#171c1f",
+                      "on-secondary-container": "#4f3100",
+                      "on-primary-container": "#004965",
+                      "surface-container": "#1b2023",
+                      "surface-container-lowest": "#0a0f12",
+                      "outline-variant": "#3e484f",
+                      "background": "#0f1417",
+                      "on-error-container": "#ffdad6",
+                      "tertiary-fixed-dim": "#4ae176",
+                      "on-tertiary-fixed": "#002109",
+                      "on-tertiary-fixed-variant": "#005321",
+                      "on-primary": "#00354a",
+                      "inverse-on-surface": "#2c3134",
+                      "on-primary-fixed": "#001e2c",
+                      "secondary": "#ffb955",
+                      "inverse-surface": "#dfe3e7",
+                      "surface-tint": "#7bd0ff",
+                      "surface-container-highest": "#313539",
+                      "surface-dim": "#0f1417",
+                      "on-tertiary-container": "#004f20",
+                      "secondary-fixed": "#ffddb4",
+                      "tertiary-container": "#2ccb63",
+                      "on-surface-variant": "#bdc8d1",
+                      "on-primary-fixed-variant": "#004c69",
+                      "surface-variant": "#313539",
+                      "inverse-primary": "#00668a",
+                      "on-error": "#690005",
+                      "primary-fixed-dim": "#7bd0ff",
+                      "on-surface": "#dfe3e7",
+                      "secondary-fixed-dim": "#ffb955",
+                      "surface-bright": "#353a3d",
+                      "secondary-container": "#dc9100",
+                      "tertiary-fixed": "#6bff8f",
+                      "on-secondary-fixed": "#291800",
+                      "on-secondary": "#452b00",
+                      "on-secondary-fixed-variant": "#633f00",
+                      "error": "#ffb4ab",
+                      "on-tertiary": "#003915",
+                      "error-container": "#93000a",
+                      "primary": "#8ed5ff",
+                      "primary-fixed": "#c4e7ff",
+                      "surface-container-high": "#262b2e",
+                      "surface": "#0f1417",
+                      "on-background": "#dfe3e7"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "section-gap": "48px",
+                      "container-padding": "32px",
+                      "card-gap": "16px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "data-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0F17; /* Foundation */
+        }
+        .surface-card {
+            background-color: #151A24; /* Surface */
+            border: 1px solid #1E293B;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary Headline: font-headline-sm text-headline-sm. Labels: font-label-caps text-label-caps fixed top-0 w-full z-50 border-b border-outline-variant dark:border-outline-variant flat no shadows">
+<div class="flex items-center justify-between px-container-padding h-16 w-full max-w-[1200px] mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="analytics" data-weight="fill" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="text-headline-sm font-headline-sm text-primary dark:text-primary tracking-tight">Synthetic Precision</span>
+</div>
+<!-- Desktop Nav Cluster -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors active:scale-95 transition-transform px-3 py-2 rounded-md font-label-caps text-label-caps" href="#">Home</a>
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors active:scale-95 transition-transform px-3 py-2 rounded-md font-label-caps text-label-caps" href="#">Picks</a>
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors active:scale-95 transition-transform px-3 py-2 rounded-md font-label-caps text-label-caps" href="#">Results</a>
+<a class="text-primary font-bold hover:bg-surface-variant transition-colors active:scale-95 transition-transform px-3 py-2 rounded-md font-label-caps text-label-caps" href="#">Account</a>
+</nav>
+<button class="font-label-caps text-label-caps px-4 py-2 bg-primary text-on-primary rounded hover:bg-primary-container transition-colors active:scale-95">Join</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="max-w-[1200px] mx-auto px-4 md:px-container-padding pt-24 md:pt-[112px] pb-section-gap grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Profile Column -->
+<div class="md:col-span-4 flex flex-col gap-card-gap">
+<div class="surface-card rounded-xl p-6 flex flex-col items-center text-center">
+<div class="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A futuristic, hyper-realistic portrait of a sports analyst working late in a high-tech data center. Neon blue accents, moody cinematic lighting, sharp focus, digital art style. Deep blacks and vibrant blue highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuKhLFO2Fn5Ws9un-4p98grKPjy4ATvb__CjdJKEortMpoehsRr4B05t2wBemF88gsYsFlzPIj9b8GFdr5Edlv1v7sJ_6knCtJ1umPa39rxbqlqpJEfnZiZNsxhAr8PzgDelX7xn8nDktmjJ6yqxklfubihaqxi3AqxqHi5kZibl3cGgz_WDsYqLIPuFv8p0IDQxeB95MMR5EEWp7AbM5r3D8rfEqFs8o2ccXuIcqlzel6fSVHsWou"/>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-background mb-1">Alex Mercer</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">alex.mercer@syntheticprecision.com</p>
+<div class="flex items-center gap-2 mb-6">
+<span class="px-3 py-1 rounded-full border border-primary text-primary font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                        Verified Pro
+                    </span>
+</div>
+<button class="w-full py-2 bg-surface-variant text-on-surface rounded font-label-caps text-label-caps hover:bg-surface-container-highest transition-colors">Edit Profile</button>
+</div>
+<!-- Settings Links -->
+<div class="surface-card rounded-xl p-2 flex flex-col">
+<a class="flex items-center justify-between p-4 rounded-lg bg-surface-container-high hover:bg-surface-variant transition-colors mb-1" href="#">
+<div class="flex items-center gap-3 text-on-background font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-outline">settings</span>
+                        Preferences
+                    </div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 rounded-lg hover:bg-surface-variant transition-colors mb-1" href="#">
+<div class="flex items-center gap-3 text-on-background font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-outline">security</span>
+                        Security
+                    </div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 rounded-lg hover:bg-surface-variant transition-colors" href="#">
+<div class="flex items-center gap-3 text-on-background font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-outline">notifications</span>
+                        Notifications
+                    </div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</a>
+</div>
+</div>
+<!-- Subscription Management Column -->
+<div class="md:col-span-8 flex flex-col gap-card-gap">
+<h1 class="font-display-lg text-display-lg mb-4 text-on-background">Subscription</h1>
+<!-- Current Plan -->
+<div class="surface-card rounded-xl p-8 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-container opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative z-10">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h2 class="font-headline-md text-headline-md text-primary">Synthetic Pro</h2>
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed-dim text-on-tertiary-fixed font-label-caps text-[10px]">ACTIVE</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Full access to AI prediction models and expert insights.</p>
+</div>
+<div class="text-right mt-4 md:mt-0">
+<div class="font-data-lg text-data-lg text-on-background">$99.00<span class="font-body-sm text-body-sm text-outline font-normal">/mo</span></div>
+</div>
+</div>
+<div class="h-[1px] w-full bg-[#1E293B] mb-6 relative z-10"></div>
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4">
+<div>
+<p class="font-label-caps text-label-caps text-outline mb-1">NEXT BILLING DATE</p>
+<p class="font-data-sm text-data-sm text-on-background">Nov 24, 2023</p>
+</div>
+<div class="flex items-center gap-4 w-full sm:w-auto">
+<button class="font-label-caps text-label-caps text-error hover:text-error-container transition-colors ml-auto sm:ml-0">Cancel anytime</button>
+</div>
+</div>
+</div>
+<!-- Payment Method -->
+<div class="surface-card rounded-xl p-8 mt-2">
+<h3 class="font-headline-sm text-headline-sm mb-6 text-on-background">Payment Method</h3>
+<div class="flex items-center justify-between bg-surface-container-low p-4 rounded-lg border border-[#1E293B]">
+<div class="flex items-center gap-4">
+<div class="w-12 h-8 bg-surface-bright rounded flex items-center justify-center border border-outline-variant">
+<!-- Placeholder for Card Brand Icon -->
+<span class="material-symbols-outlined text-on-surface-variant">credit_card</span>
+</div>
+<div>
+<p class="font-data-sm text-data-sm text-on-background mb-1">•••• •••• •••• 4242</p>
+<p class="font-label-caps text-[10px] text-outline">EXPIRES 12/25</p>
+</div>
+</div>
+<button class="px-4 py-2 border border-[#1E293B] rounded font-label-caps text-label-caps text-on-background hover:bg-surface-variant hover:border-outline-variant transition-colors">Update</button>
+</div>
+</div>
+<!-- Billing History -->
+<div class="surface-card rounded-xl p-8 mt-2">
+<h3 class="font-headline-sm text-headline-sm mb-6 text-on-background flex justify-between items-center">
+                    Billing History
+                    <button class="font-label-caps text-label-caps text-primary hover:text-primary-container flex items-center gap-1">
+                        Download All
+                        <span class="material-symbols-outlined text-[16px]">download</span>
+</button>
+</h3>
+<div class="flex flex-col">
+<!-- Row 1 -->
+<div class="flex items-center justify-between py-4 border-b border-[#1E293B]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-tertiary-fixed-dim">receipt_long</span>
+<div>
+<p class="font-data-sm text-data-sm text-on-background">Oct 24, 2023</p>
+<p class="font-body-sm text-[12px] text-outline">Synthetic Pro Monthly</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="font-data-sm text-data-sm text-on-background">$99.00</span>
+<button class="material-symbols-outlined text-outline hover:text-primary transition-colors text-[20px]">file_download</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between py-4 border-b border-[#1E293B]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-tertiary-fixed-dim">receipt_long</span>
+<div>
+<p class="font-data-sm text-data-sm text-on-background">Sep 24, 2023</p>
+<p class="font-body-sm text-[12px] text-outline">Synthetic Pro Monthly</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="font-data-sm text-data-sm text-on-background">$99.00</span>
+<button class="material-symbols-outlined text-outline hover:text-primary transition-colors text-[20px]">file_download</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between py-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-tertiary-fixed-dim">receipt_long</span>
+<div>
+<p class="font-data-sm text-data-sm text-on-background">Aug 24, 2023</p>
+<p class="font-body-sm text-[12px] text-outline">Synthetic Pro Monthly</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="font-data-sm text-data-sm text-on-background">$99.00</span>
+<button class="material-symbols-outlined text-outline hover:text-primary transition-colors text-[20px]">file_download</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden bg-surface-container dark:bg-surface-container text-primary dark:text-primary Labels: font-label-caps text-label-caps fixed bottom-0 w-full z-50 bg-surface-container dark:bg-surface-container flat no shadows flex justify-around items-center px-4 py-3 w-full border-t-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-label-caps text-label-caps mt-1">Picks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps mt-1">Results</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 hover:text-primary transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps mt-1 text-primary font-bold">Account</span>
+</a>
+</nav>
+</body></html>

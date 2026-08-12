@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - Synthetic Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#52e87c",
+                        "primary-container": "#38bdf8",
+                        "outline": "#87929a",
+                        "surface-container-low": "#171c1f",
+                        "on-secondary-container": "#4f3100",
+                        "on-primary-container": "#004965",
+                        "surface-container": "#1b2023",
+                        "surface-container-lowest": "#0a0f12",
+                        "outline-variant": "#3e484f",
+                        "background": "#0f1417",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-tertiary-fixed": "#002109",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "on-primary": "#00354a",
+                        "inverse-on-surface": "#2c3134",
+                        "on-primary-fixed": "#001e2c",
+                        "secondary": "#ffb955",
+                        "inverse-surface": "#dfe3e7",
+                        "surface-tint": "#7bd0ff",
+                        "surface-container-highest": "#313539",
+                        "surface-dim": "#0f1417",
+                        "on-tertiary-container": "#004f20",
+                        "secondary-fixed": "#ffddb4",
+                        "tertiary-container": "#2ccb63",
+                        "on-surface-variant": "#bdc8d1",
+                        "on-primary-fixed-variant": "#004c69",
+                        "surface-variant": "#313539",
+                        "inverse-primary": "#00668a",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#7bd0ff",
+                        "on-surface": "#dfe3e7",
+                        "secondary-fixed-dim": "#ffb955",
+                        "surface-bright": "#353a3d",
+                        "secondary-container": "#dc9100",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-secondary-fixed": "#291800",
+                        "on-secondary": "#452b00",
+                        "on-secondary-fixed-variant": "#633f00",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#003915",
+                        "error-container": "#93000a",
+                        "primary": "#8ed5ff",
+                        "primary-fixed": "#c4e7ff",
+                        "surface-container-high": "#262b2e",
+                        "surface": "#0f1417",
+                        "on-background": "#dfe3e7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "section-gap": "48px",
+                        "container-padding": "32px",
+                        "card-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "data-lg": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-sm": ["14px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "data-lg": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Base styles mapped to design system hex codes */
+        body { background-color: #0B0F17; }
+        .login-card { background-color: #151A24; border-color: #1E293B; }
+        .input-field { background-color: #0B0F17; border-color: #1E293B; }
+        .input-field:focus { border-color: #38bdf8; box-shadow: 0 0 0 1px #38bdf8; outline: none; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-on-surface p-container-padding font-body-lg">
+<div class="login-card w-full max-w-md rounded-xl border p-section-gap flex flex-col items-center">
+<!-- Logo Header -->
+<div class="flex items-center gap-unit mb-8 text-primary">
+<span class="material-symbols-outlined text-3xl">analytics</span>
+<h1 class="font-headline-md text-headline-md tracking-tight">Synthetic Precision</h1>
+</div>
+<!-- Form -->
+<form class="w-full flex flex-col gap-card-gap">
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant" for="email">Email</label>
+<input class="input-field w-full rounded-lg px-4 py-3 text-on-surface transition-colors" id="email" placeholder="analyst@example.com" required="" type="email"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant" for="password">Password</label>
+<input class="input-field w-full rounded-lg px-4 py-3 text-on-surface transition-colors" id="password" placeholder="••••••••" required="" type="password"/>
+</div>
+<button class="mt-4 w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm rounded-lg py-3 hover:bg-primary transition-colors active:scale-95" type="submit">
+                Sign In
+            </button>
+</form>
+<!-- Footer Link -->
+<div class="mt-8 text-center">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Don't have an account? 
+                <a class="text-primary hover:text-primary-container transition-colors ml-1 font-label-caps text-label-caps" href="#">Sign up</a>
+</p>
+</div>
+</div>
+</body></html>
