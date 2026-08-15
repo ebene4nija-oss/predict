@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Settle Match Result — Prophet AI Admin')
+@section('title', 'Settle Match Result — Guaranteed Correct Admin')
 
 @section('content')
 <div class="max-w-3xl mx-auto space-y-6">

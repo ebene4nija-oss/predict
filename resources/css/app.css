@@ -5,7 +5,43 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* The layout sets class="dark" on <html>, so keep class-based dark mode
+   rather than Tailwind v4's prefers-color-scheme default. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand palette, previously declared in the inline CDN config. */
+    --color-bg: #0b0f17;
+    --color-surface: #151a24;
+    --color-surface-elevated: #1e2534;
+    --color-ai: #38bdf8;
+    --color-expert: #f5a623;
+    --color-win: #22c55e;
+    --color-loss: #ef4444;
+}
+
+@layer base {
+    body {
+        font-family: var(--font-sans);
+        background-color: var(--color-bg);
+        color: #f1f5f9;
+    }
+}
+
+@layer components {
+    .glass-panel {
+        background: rgba(21, 26, 36, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ai-gradient-text {
+        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 }

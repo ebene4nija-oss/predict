@@ -84,7 +84,7 @@
                 <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-2 text-slate-300">
                     <div class="flex justify-between">
                         <span>VIP Public Channel:</span>
-                        <span class="font-bold text-sky-400">@ProphetAIPicks</span>
+                        <span class="font-bold text-sky-400">{{ \App\Support\TelegramHandles::channelHandle() }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span>High Conviction Picks (75%+):</span>

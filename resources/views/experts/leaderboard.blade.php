@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Official Expert Analyst Leaderboard — Prophet AI')
+@section('title', 'Official Expert Analyst Leaderboard — Guaranteed Correct')
 
 @section('content')
     <div class="max-w-5xl mx-auto py-6 space-y-6">
@@ -44,7 +44,7 @@
                                         <div>
                                             <div class="font-bold text-white flex items-center space-x-1.5">
                                                 <span>{{ $expert->name }}</span>
-                                                @if($loop->first)
+                                                @if($loop->first && $expert->win_rate !== null)
                                                     <span class="text-xs text-amber-400">👑 Top Analyst</span>
                                                 @endif
                                             </div>
@@ -54,8 +54,12 @@
                                 </td>
                                 <td class="py-4 px-4 text-center font-bold text-slate-200 font-mono">{{ $expert->total_picks }}</td>
                                 <td class="py-4 px-4 text-center font-bold text-emerald-400 font-mono">{{ $expert->won_count }} / {{ $expert->settled_count }}</td>
-                                <td class="py-4 px-4 text-right font-black text-amber-400 font-mono text-base">
-                                    {{ $expert->win_rate }}%
+                                <td class="py-4 px-4 text-right font-black font-mono text-base {{ $expert->win_rate === null ? 'text-slate-500' : 'text-amber-400' }}">
+                                    @if($expert->win_rate === null)
+                                        <span title="No settled picks yet">Unrated</span>
+                                    @else
+                                        {{ $expert->win_rate }}%
+                                    @endif
                                 </td>
                             </tr>
                         @empty

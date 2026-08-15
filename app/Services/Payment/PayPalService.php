@@ -2,40 +2,91 @@
 
 namespace App\Services\Payment;
 
-use App\Models\User;
+use App\Models\Setting;
 use App\Models\Subscription;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PayPalService
 {
-    protected string $clientId;
-    protected string $secret;
-    protected string $baseUrl = 'https://api-m.sandbox.paypal.com';
+    public function __construct(protected SubscriptionManager $subscriptions) {}
 
-    public function __construct()
+    /**
+     * Read lazily rather than in the constructor, so a key saved in the admin
+     * dashboard takes effect on the next call instead of the next deploy.
+     */
+    protected function clientId(): string
     {
-        $this->clientId = config('services.paypal.client_id') ?? env('PAYPAL_CLIENT_ID', 'PAYPAL_MOCK_CLIENT_ID');
-        $this->secret = config('services.paypal.secret') ?? env('PAYPAL_SECRET', 'PAYPAL_MOCK_SECRET');
+        return Setting::credential('paypal_client_id', 'services.paypal.client_id');
+    }
+
+    protected function secret(): string
+    {
+        return Setting::credential('paypal_secret', 'services.paypal.secret');
+    }
+
+    protected function webhookId(): string
+    {
+        return Setting::credential('paypal_webhook_id', 'services.paypal.webhook_id');
+    }
+
+    protected function planId(): string
+    {
+        return Setting::credential('paypal_plan_id', 'services.paypal.plan_id');
+    }
+
+    protected function mode(): string
+    {
+        return Setting::credential('paypal_mode', 'services.paypal.mode') ?: 'sandbox';
+    }
+
+    protected function baseUrl(): string
+    {
+        return $this->mode() === 'live'
+            ? 'https://api-m.paypal.com'
+            : 'https://api-m.sandbox.paypal.com';
     }
 
     /**
-     * Create subscription link for PayPal
+     * Mock mode is a local-only convenience — see FlutterwaveService::isMockMode().
      */
-    public function createSubscriptionLink(User $user, string $planId = 'P-MOCK_PLAN_PRO'): string
+    public function isMockMode(): bool
     {
-        if (str_contains($this->clientId, 'MOCK')) {
+        if (! app()->environment('local', 'testing')) {
+            return false;
+        }
+
+        return $this->clientId() === '' || str_contains(strtoupper($this->clientId()), 'MOCK');
+    }
+
+    /**
+     * Create a PayPal subscription approval link. Null when unavailable.
+     */
+    public function createSubscriptionLink(User $user): ?string
+    {
+        if ($this->isMockMode()) {
             return route('subscription.callback', [
                 'gateway' => 'paypal',
-                'status' => 'APPROVED',
                 'subscription_id' => 'I-PP' . strtoupper(uniqid()),
-                'user_id' => $user->id,
             ]);
+        }
+
+        if ($this->clientId() === '' || $this->secret() === '' || $this->planId() === '') {
+            Log::error('PayPal credentials or plan id are not configured.');
+
+            return null;
         }
 
         $token = $this->getAccessToken();
 
-        $response = Http::withToken($token)->post("{$this->baseUrl}/v1/billing/subscriptions", [
-            'plan_id' => $planId,
+        if ($token === '') {
+            return null;
+        }
+
+        $response = Http::withToken($token)->post("{$this->baseUrl()}/v1/billing/subscriptions", [
+            'plan_id' => $this->planId(),
             'subscriber' => [
                 'name' => ['given_name' => $user->name],
                 'email_address' => $user->email,
@@ -46,65 +97,205 @@ class PayPalService
             ],
         ]);
 
-        if ($response->successful()) {
-            $links = $response->json()['links'] ?? [];
-            foreach ($links as $link) {
-                if (($link['rel'] ?? '') === 'approve') {
-                    return $link['href'];
-                }
+        if (! $response->successful()) {
+            Log::error('PayPal subscription creation failed', [
+                'user_id' => $user->id,
+                'status' => $response->status(),
+            ]);
+
+            return null;
+        }
+
+        foreach ($response->json('links') ?? [] as $link) {
+            if (($link['rel'] ?? '') === 'approve') {
+                return $link['href'];
             }
         }
 
-        return route('subscription.pricing');
+        return null;
     }
 
     protected function getAccessToken(): string
     {
-        $response = Http::withBasicAuth($this->clientId, $this->secret)
+        $response = Http::withBasicAuth($this->clientId(), $this->secret())
             ->asForm()
-            ->post("{$this->baseUrl}/v1/oauth2/token", [
-                'grant_type' => 'client_credentials',
-            ]);
+            ->post("{$this->baseUrl()}/v1/oauth2/token", ['grant_type' => 'client_credentials']);
 
-        return $response->json()['access_token'] ?? '';
+        if (! $response->successful()) {
+            Log::error('PayPal access token request failed', ['status' => $response->status()]);
+
+            return '';
+        }
+
+        return (string) $response->json('access_token', '');
     }
 
+    /**
+     * Confirm a subscription is genuinely active and belongs to this user.
+     */
+    public function verifySubscription(string $subscriptionId, User $user): ?string
+    {
+        if ($subscriptionId === '') {
+            return null;
+        }
+
+        if ($this->isMockMode()) {
+            return $subscriptionId;
+        }
+
+        $token = $this->getAccessToken();
+
+        if ($token === '') {
+            return null;
+        }
+
+        $response = Http::withToken($token)
+            ->get("{$this->baseUrl()}/v1/billing/subscriptions/{$subscriptionId}");
+
+        if (! $response->successful()) {
+            Log::warning('PayPal subscription lookup failed', [
+                'subscription_id' => $subscriptionId,
+                'status' => $response->status(),
+            ]);
+
+            return null;
+        }
+
+        $data = $response->json();
+        $status = (string) ($data['status'] ?? '');
+
+        // Only ACTIVE means PayPal has actually collected the first payment.
+        // APPROVED means the buyer agreed but billing has not run yet, so it is
+        // not proof of payment; those users are activated moments later by the
+        // BILLING.SUBSCRIPTION.ACTIVATED webhook instead.
+        $isActive = $status === 'ACTIVE';
+        $ownedByUser = strcasecmp((string) ($data['subscriber']['email_address'] ?? ''), $user->email) === 0;
+
+        if (! $isActive || ! $ownedByUser) {
+            Log::warning('PayPal subscription rejected', [
+                'subscription_id' => $subscriptionId,
+                'user_id' => $user->id,
+                'status' => $status,
+                'email_match' => $ownedByUser,
+            ]);
+
+            return null;
+        }
+
+        return (string) ($data['id'] ?? $subscriptionId);
+    }
+
+    /**
+     * Ask PayPal to verify the signature on an incoming webhook.
+     */
+    public function verifyWebhookSignature(Request $request): bool
+    {
+        if ($this->webhookId() === '') {
+            Log::error('PayPal webhook id is not configured; rejecting webhook.');
+
+            return false;
+        }
+
+        $required = [
+            'transmission_id' => 'paypal-transmission-id',
+            'transmission_time' => 'paypal-transmission-time',
+            'transmission_sig' => 'paypal-transmission-sig',
+            'cert_url' => 'paypal-cert-url',
+            'auth_algo' => 'paypal-auth-algo',
+        ];
+
+        $headers = [];
+        foreach ($required as $field => $header) {
+            $value = $request->header($header);
+            if (! $value) {
+                Log::warning('PayPal webhook missing signature header', ['header' => $header]);
+
+                return false;
+            }
+            $headers[$field] = $value;
+        }
+
+        $token = $this->getAccessToken();
+
+        if ($token === '') {
+            return false;
+        }
+
+        $response = Http::withToken($token)
+            ->post("{$this->baseUrl()}/v1/notifications/verify-webhook-signature", $headers + [
+                'webhook_id' => $this->webhookId(),
+                'webhook_event' => $request->all(),
+            ]);
+
+        return $response->successful()
+            && $response->json('verification_status') === 'SUCCESS';
+    }
+
+    /**
+     * Process a verified webhook payload.
+     */
     public function handleWebhook(array $payload): void
     {
         $eventType = $payload['event_type'] ?? '';
         $resource = $payload['resource'] ?? [];
+
+        $reference = $this->subscriptionReference($resource);
+        $user = $this->resolveUser($resource, $reference);
+
+        if (! $user) {
+            Log::warning('PayPal webhook could not be matched to a user', [
+                'event_type' => $eventType,
+                'reference' => $reference,
+            ]);
+
+            return;
+        }
+
+        if (in_array($eventType, ['BILLING.SUBSCRIPTION.ACTIVATED', 'PAYMENT.SALE.COMPLETED'], true)) {
+            $this->subscriptions->activate($user, 'paypal', $reference ?? 'I-PP' . now()->timestamp);
+        } elseif ($eventType === 'BILLING.SUBSCRIPTION.PAYMENT.FAILED') {
+            $this->subscriptions->markPastDue($user);
+        } elseif (in_array($eventType, ['BILLING.SUBSCRIPTION.CANCELLED', 'BILLING.SUBSCRIPTION.EXPIRED'], true)) {
+            $this->subscriptions->cancel($user);
+        }
+    }
+
+    /**
+     * The subscription this event refers to.
+     *
+     * Subscription events carry the subscription id as `id`. Sale events — the
+     * recurring renewal payments — put the sale id there instead and name the
+     * subscription `billing_agreement_id`.
+     */
+    protected function subscriptionReference(array $resource): ?string
+    {
+        $reference = $resource['billing_agreement_id'] ?? $resource['id'] ?? null;
+
+        return $reference === null ? null : (string) $reference;
+    }
+
+    /**
+     * Match the event to a local user.
+     *
+     * Only subscription events embed the subscriber's email address; sale
+     * events do not, so those fall back to the subscription reference stored at
+     * activation. Without that fallback every recurring renewal was silently
+     * dropped for want of an email.
+     */
+    protected function resolveUser(array $resource, ?string $reference): ?User
+    {
         $email = $resource['subscriber']['email_address'] ?? null;
 
-        if (!$email) {
-            return;
+        if ($email && $user = User::where('email', $email)->first()) {
+            return $user;
         }
 
-        $user = User::where('email', $email)->first();
-        if (!$user) {
-            return;
+        if ($reference === null) {
+            return null;
         }
 
-        if ($eventType === 'BILLING.SUBSCRIPTION.ACTIVATED' || $eventType === 'PAYMENT.SALE.COMPLETED') {
-            Subscription::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'gateway' => 'paypal',
-                    'gateway_subscription_id' => $resource['id'] ?? 'I-PP' . time(),
-                    'status' => 'active',
-                    'plan' => 'monthly_pro',
-                    'renews_at' => now()->addMonth(),
-                    'grace_period_ends_at' => null,
-                ]
-            );
-            $user->update(['role' => 'subscriber']);
-        } elseif ($eventType === 'BILLING.SUBSCRIPTION.PAYMENT.FAILED') {
-            $sub = Subscription::where('user_id', $user->id)->first();
-            if ($sub) {
-                $sub->update([
-                    'status' => 'past_due',
-                    'grace_period_ends_at' => now()->addDays(7),
-                ]);
-            }
-        }
+        return Subscription::where('gateway', 'paypal')
+            ->where('gateway_subscription_id', $reference)
+            ->first()?->user;
     }
 }

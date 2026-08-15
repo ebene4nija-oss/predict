@@ -14,10 +14,13 @@ class GameMatch extends Model
     protected $table = 'matches';
 
     protected $fillable = [
+        'external_id',
+        'provider',
         'home_team',
         'away_team',
         'league',
         'kickoff_at',
+        'status',
         'home_form',
         'away_form',
         'h2h_summary',
@@ -30,6 +33,11 @@ class GameMatch extends Model
         'home_form' => 'array',
         'away_form' => 'array',
     ];
+
+    public function hasStarted(): bool
+    {
+        return $this->kickoff_at !== null && $this->kickoff_at->isPast();
+    }
 
     public function predictions(): HasMany
     {

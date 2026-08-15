@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Upgrade to Prophet AI PRO — Unlimited Top Picks & Expert Access')
+@section('title', 'Upgrade to Guaranteed Correct PRO — Unlimited Top Picks & Expert Access')
 
 @section('content')
     <div class="max-w-xl mx-auto py-8">
@@ -13,17 +13,20 @@
                 <span class="px-3 py-1 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 text-white font-extrabold text-[11px] uppercase tracking-wider shadow-lg shadow-sky-500/30">
                     PRO ACCESS UNLIMITED
                 </span>
-                <h1 class="text-3xl font-extrabold text-white mt-3">PROPHET AI Monthly PRO</h1>
+                <h1 class="text-3xl font-extrabold text-white mt-3">GUARANTEED CORRECT Monthly PRO</h1>
                 <p class="text-xs text-slate-400 mt-1">Unlock all ranked picks, AI Top 5, Expert analysis & ad-free browsing.</p>
             </div>
 
-            <!-- Price Display -->
+            <!-- Price Display — currency follows the visitor's market -->
             <div class="text-center py-4 bg-[#0B0F17]/80 rounded-2xl border border-slate-800 relative z-10">
                 <div class="flex items-baseline justify-center space-x-1">
-                    <span class="text-4xl font-black text-white">₦5,000</span>
-                    <span class="text-xs text-slate-400 font-semibold">/ month</span>
+                    <span class="text-4xl font-black text-white">{{ $pricing['formatted'] }}</span>
+                    <span class="text-xs text-slate-400 font-semibold">{{ $pricing['currency'] }} / month</span>
                 </div>
-                <div class="text-[11px] text-slate-500 mt-1">Or ~$9.99 USD for global accounts via PayPal</div>
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Billed monthly in {{ $pricing['currency'] }} via
+                    {{ $pricing['gateway'] === 'paypal' ? 'PayPal' : 'Flutterwave' }}.
+                </div>
             </div>
 
             <!-- Feature List -->
@@ -53,11 +56,15 @@
             <!-- Payment Form -->
             <form action="{{ route('subscription.checkout') }}" method="POST" class="space-y-4 relative z-10">
                 @csrf
+                {{-- Carries the resolved market through checkout so the price
+                     shown above is the price charged. --}}
+                <input type="hidden" name="country" value="{{ $pricing['country'] }}">
+
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Select Payment Gateway</label>
                     <div class="grid grid-cols-2 gap-3">
                         <label class="p-3 rounded-xl bg-slate-900 border border-slate-700 flex items-center space-x-2 cursor-pointer hover:border-sky-400 transition-all">
-                            <input type="radio" name="gateway" value="flutterwave" checked class="text-sky-400 focus:ring-0">
+                            <input type="radio" name="gateway" value="flutterwave" @checked($pricing['gateway'] === 'flutterwave') class="text-sky-400 focus:ring-0">
                             <div>
                                 <div class="text-xs font-bold text-white">Flutterwave</div>
                                 <div class="text-[10px] text-slate-400">Cards, Bank, Mobile Money</div>
@@ -65,7 +72,7 @@
                         </label>
 
                         <label class="p-3 rounded-xl bg-slate-900 border border-slate-700 flex items-center space-x-2 cursor-pointer hover:border-sky-400 transition-all">
-                            <input type="radio" name="gateway" value="paypal" class="text-sky-400 focus:ring-0">
+                            <input type="radio" name="gateway" value="paypal" @checked($pricing['gateway'] === 'paypal') class="text-sky-400 focus:ring-0">
                             <div>
                                 <div class="text-xs font-bold text-white">PayPal</div>
                                 <div class="text-[10px] text-slate-400">Global & USD Payments</div>
@@ -79,8 +86,35 @@
                 </button>
             </form>
 
-            <div class="text-center text-[11px] text-slate-500 relative z-10">
-                Cancel anytime from your account. Native Flutterwave & PayPal subscription APIs.
+            {{-- Detection is a convenience, so it always has to be overridable:
+                 a Nigerian card on holiday abroad still needs the naira flow. --}}
+            <form action="{{ route('subscription.pricing') }}" method="GET" class="relative z-10 text-center">
+                <label class="text-[11px] text-slate-500">
+                    Paying from somewhere else?
+                    <select name="country" onchange="this.form.submit()"
+                            class="ml-1 bg-slate-900 border border-slate-700 rounded-lg text-[11px] text-slate-300 py-1 pl-2 pr-6">
+                        @foreach (['NG' => 'Nigeria', 'GH' => 'Ghana', 'KE' => 'Kenya', 'ZA' => 'South Africa', 'GB' => 'United Kingdom', 'US' => 'United States'] as $code => $label)
+                            <option value="{{ $code }}" @selected($pricing['country'] === $code)>{{ $label }}</option>
+                        @endforeach
+                        @unless (in_array($pricing['country'], ['NG', 'GH', 'KE', 'ZA', 'GB', 'US'], true))
+                            <option value="{{ $pricing['country'] }}" selected>{{ $pricing['country'] }}</option>
+                        @endunless
+                    </select>
+                </label>
+                <noscript>
+                    <button type="submit" class="ml-2 text-[11px] text-sky-400 underline">Update</button>
+                </noscript>
+            </form>
+
+            <div class="text-center text-[11px] text-slate-500 relative z-10 space-y-1">
+                <div>Cancel anytime from your account. Native Flutterwave &amp; PayPal subscription APIs.</div>
+                <div>
+                    By subscribing you agree to our
+                    <a href="{{ route('legal.terms') }}" class="text-slate-400 underline hover:text-slate-200">Terms</a>,
+                    <a href="{{ route('legal.privacy') }}" class="text-slate-400 underline hover:text-slate-200">Privacy Policy</a>
+                    and
+                    <a href="{{ route('legal.refunds') }}" class="text-slate-400 underline hover:text-slate-200">Refund Policy</a>.
+                </div>
             </div>
         </div>
     </div>

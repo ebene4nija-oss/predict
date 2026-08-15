@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +42,35 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * A paying subscriber.
+     *
+     * The role alone no longer grants access — {@see User::isSubscriber()}
+     * defers to the subscription row — so paid access has to be built the same
+     * way the application builds it.
+     */
+    public function subscriber(): static
+    {
+        return $this->state(fn (array $attributes) => ['role' => 'subscriber'])
+            ->afterCreating(function (User $user) {
+                Subscription::factory()->for($user)->create();
+            });
+    }
+
+    /**
+     * A subscriber whose renewal date has passed without the gateway
+     * confirming a fresh payment.
+     */
+    public function lapsedSubscriber(): static
+    {
+        return $this->state(fn (array $attributes) => ['role' => 'subscriber'])
+            ->afterCreating(function (User $user) {
+                Subscription::factory()->for($user)->create([
+                    'status' => 'active',
+                    'renews_at' => now()->subDays(3),
+                ]);
+            });
     }
 }

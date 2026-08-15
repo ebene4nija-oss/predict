@@ -19,6 +19,11 @@ class Result extends Model
     ];
 
     protected $casts = [
+        // Scores must be ints: the accuracy calculations compare them with ===
+        // to detect draws, which silently fails when the driver hands back
+        // numeric strings.
+        'home_score' => 'integer',
+        'away_score' => 'integer',
         'actual_outcome' => 'array',
         'settled_at' => 'datetime',
     ];

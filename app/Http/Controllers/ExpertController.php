@@ -5,15 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\ExpertPick;
 use App\Models\GameMatch;
 use App\Models\Expert;
+use App\Support\MarketOutcome;
 use Illuminate\Http\Request;
 
 class ExpertController extends Controller
 {
     public function index(Request $request)
     {
+        // The id tiebreaker keeps the order total: picks created in the same
+        // second would otherwise sort arbitrarily, which both scrambles the
+        // free-sample selection and lets paginated rows repeat or go missing.
         $expertPicks = ExpertPick::with(['expert', 'match'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(20);
 
         $user = $request->user();
         $isSubscriber = $user ? $user->isSubscriber() : false;
@@ -52,7 +57,7 @@ class ExpertController extends Controller
 
         $expert = $user->expert ?? Expert::firstOrCreate(
             ['user_id' => $user->id],
-            ['name' => $user->name, 'bio' => 'Verified Prophet AI Expert Strategist']
+            ['name' => $user->name, 'bio' => 'Verified Guaranteed Correct Expert Strategist']
         );
 
         ExpertPick::create([
@@ -73,37 +78,39 @@ class ExpertController extends Controller
             ->with(['picks.match.result'])
             ->get()
             ->map(function ($expert) {
-                $totalPicks = $expert->picks->count();
-                $settledPicks = $expert->picks->filter(fn($p) => $p->match && $p->match->result);
-                $wonPicks = $settledPicks->filter(function ($p) {
-                    $res = $p->match->result;
-                    if ($p->market === 'win_draw_loss') {
-                        if ($p->pick === 'Home Win') return $res->home_score > $res->away_score;
-                        if ($p->pick === 'Away Win') return $res->away_score > $res->home_score;
-                        if ($p->pick === 'Draw') return $res->home_score === $res->away_score;
-                    }
-                    if ($p->market === 'gg') {
-                        $bothScored = $res->home_score > 0 && $res->away_score > 0;
-                        return $p->pick === 'Yes' ? $bothScored : !$bothScored;
-                    }
-                    if ($p->market === 'over_2_5') {
-                        $over = ($res->home_score + $res->away_score) > 2.5;
-                        return $p->pick === 'Over 2.5' ? $over : !$over;
-                    }
-                    return false;
-                })->count();
+                // Unscoreable free-text picks are left out of the denominator
+                // too, so the leaderboard agrees with the track record.
+                $settledPicks = $expert->picks->filter(
+                    fn ($p) => $p->match
+                        && $p->match->result
+                        && MarketOutcome::isGradeable($p->market, $p->pick)
+                );
+
+                $wonCount = $settledPicks->filter(fn ($p) => MarketOutcome::isWinningPick(
+                    $p->market,
+                    $p->pick,
+                    $p->match->result->home_score,
+                    $p->match->result->away_score,
+                ))->count();
 
                 $settledCount = $settledPicks->count();
-                $winRate = $settledCount > 0 ? round(($wonPicks / $settledCount) * 100, 1) : 82.5; // default high hit rate for demo
 
-                $expert->total_picks = $totalPicks;
+                $expert->total_picks = $expert->picks->count();
                 $expert->settled_count = $settledCount;
-                $expert->won_count = $wonPicks;
-                $expert->win_rate = $winRate;
+                $expert->won_count = $wonCount;
+
+                // Null, not a flattering placeholder: an expert with nothing
+                // settled yet has no record, and publishing an invented hit
+                // rate on a betting site is not something to paper over.
+                $expert->win_rate = $settledCount > 0
+                    ? round(($wonCount / $settledCount) * 100, 1)
+                    : null;
 
                 return $expert;
             })
-            ->sortByDesc('win_rate');
+            // Unrated experts sort last rather than above proven ones.
+            ->sortByDesc(fn ($expert) => $expert->win_rate ?? -1)
+            ->values();
 
         return view('experts.leaderboard', compact('experts'));
     }

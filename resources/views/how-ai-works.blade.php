@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'How the AI Works — Prophet AI Architecture')
+@section('title', 'How the AI Works — Guaranteed Correct Architecture')
 
 @section('content')
     <div class="max-w-4xl mx-auto space-y-10 py-4">
@@ -10,7 +10,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 <span>TRANSPARENT MATHEMATICAL MODELING</span>
             </div>
-            <h1 class="text-3xl sm:text-4xl font-black text-white">How Prophet AI Generates Predictions</h1>
+            <h1 class="text-3xl sm:text-4xl font-black text-white">How Guaranteed Correct Generates Predictions</h1>
             <p class="text-sm text-slate-400 max-w-2xl mx-auto">
                 No black-box secrets. Our probabilities come strictly from a deterministic Expected Goals (xG) Poisson statistical engine. The LLM's only job is writing readable tactical previews.
             </p>
@@ -22,7 +22,10 @@
                 <div class="text-xs font-mono font-bold text-sky-400">STEP 1</div>
                 <h3 class="text-lg font-bold text-white">Data Ingestion & Team Stats</h3>
                 <p class="text-xs leading-relaxed text-slate-300">
-                    Nightly background jobs fetch fixture data, recent 5-10 match form splits, home vs away performance metrics, head-to-head records, goals scored/conceded, and confirmed injury reports.
+                    Nightly background jobs fetch fixtures and recent scoring form &mdash; goals scored and conceded per game for both sides, split home and away. Those figures are the model's entire input.
+                </p>
+                <p class="text-[11px] leading-relaxed text-slate-400">
+                    Head-to-head notes and team news are shown only for fixtures where we hold them; our fixture feed does not supply injury data, so they are added by hand and are often absent. When present they inform the written preview only &mdash; never the probabilities.
                 </p>
             </div>
 
@@ -30,7 +33,7 @@
                 <div class="text-xs font-mono font-bold text-emerald-400">STEP 2</div>
                 <h3 class="text-lg font-bold text-white">Poisson Expected Goals (xG) Engine</h3>
                 <p class="text-xs leading-relaxed text-slate-300">
-                    Calculates expected home goals ($\lambda_{home}$) and away goals ($\lambda_{away}$) using bivariate Poisson distribution matrices over goal ranges 0..6. Returns exact win/draw/loss, GG, and Over 2.5 probabilities.
+                    Expresses each side's attack and defence relative to its league's scoring baseline, giving expected goals for home and away. A Poisson score matrix over 0&ndash;10 goals per side, with the Dixon-Coles correction applied to the low-scoring cells, converts those into win/draw/loss, GG and Over 2.5 probabilities.
                 </p>
             </div>
 
@@ -38,7 +41,7 @@
                 <div class="text-xs font-mono font-bold text-indigo-400">STEP 3</div>
                 <h3 class="text-lg font-bold text-white">Gemini LLM Preview Generation</h3>
                 <p class="text-xs leading-relaxed text-slate-300">
-                    Pre-computed probabilities and team news are passed to the Gemini API to compose an engaging tactical 2-paragraph editorial preview. The LLM never invents or alters probabilities.
+                    The already-computed probabilities, plus whatever team news we hold, are passed to Gemini to write a two-paragraph tactical preview. The model writes prose only &mdash; it never invents or alters a probability, and where team news is missing it is told so rather than left to guess.
                 </p>
             </div>
 

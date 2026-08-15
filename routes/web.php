@@ -8,6 +8,9 @@ use App\Http\Controllers\TrackRecordController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\LegalController;
+use App\Http\Controllers\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
 // Public Pages
@@ -20,19 +23,43 @@ Route::get('/top-picks', [PredictionController::class, 'topPicks'])->name('top.p
 Route::get('/expert-picks', [ExpertController::class, 'index'])->name('expert.picks');
 Route::get('/expert-leaderboard', [ExpertController::class, 'leaderboard'])->name('expert.leaderboard');
 
+// Legal. Both payment gateways require these to be publicly reachable before a
+// live merchant account is approved.
+Route::get('/terms', [LegalController::class, 'terms'])->name('legal.terms');
+Route::get('/privacy', [LegalController::class, 'privacy'])->name('legal.privacy');
+Route::get('/refunds', [LegalController::class, 'refunds'])->name('legal.refunds');
+
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+
+    // Forgotten password
+    Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+        ->middleware('throttle:auth')->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
+        ->middleware('throttle:auth')->name('password.update');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Email verification
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware('signed')->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+        ->middleware('throttle:auth')->name('verification.send');
+});
+
 // Subscription Payments & Callbacks
 Route::middleware('auth')->group(function () {
     Route::post('/checkout', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
+    Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('subscription.callback');
     Route::get('/account', [SubscriptionController::class, 'account'])->name('account');
     Route::post('/cancel-subscription', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
     
@@ -96,6 +123,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/ads', [\App\Http\Controllers\AdminAdController::class, 'update'])->name('admin.ads.update');
 });
 
-Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('subscription.callback');
 Route::post('/webhooks/payment', [SubscriptionController::class, 'handleWebhook'])->name('webhooks.payment');
 

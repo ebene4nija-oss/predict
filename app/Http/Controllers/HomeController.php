@@ -19,6 +19,7 @@ class HomeController extends Controller
 
         $aiTop5 = Prediction::with('match')
             ->where('is_ai5', true)
+            ->forUpcomingMatches()
             ->orderBy('probability', 'desc')
             ->take(5)
             ->get();

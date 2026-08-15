@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Submit Expert Pick — Prophet AI Portal')
+@section('title', 'Submit Expert Pick — Guaranteed Correct Portal')
 
 @section('content')
     <div class="max-w-2xl mx-auto py-6">

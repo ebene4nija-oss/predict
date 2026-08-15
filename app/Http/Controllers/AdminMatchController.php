@@ -6,6 +6,8 @@ use App\Models\GameMatch;
 use App\Models\Result;
 use App\Services\PredictionService;
 use App\Services\PreviewGenerationService;
+use App\Services\TrackRecordService;
+use App\Support\MarketOutcome;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -47,8 +49,12 @@ class AdminMatchController extends Controller
             'kickoff_at' => Carbon::parse($validated['kickoff_at']),
             'home_form' => ['gf' => (float)($validated['home_gf'] ?? 1.8), 'ga' => (float)($validated['home_ga'] ?? 1.0)],
             'away_form' => ['gf' => (float)($validated['away_gf'] ?? 1.2), 'ga' => (float)($validated['away_ga'] ?? 1.5)],
-            'h2h_summary' => $validated['h2h_summary'] ?? 'Recent balanced form.',
-            'injury_notes' => $validated['injury_notes'] ?? 'No major absences reported.',
+            // Left null when not supplied. Defaulting these to "Recent balanced
+            // form" and "No major absences reported" asserted facts nobody had
+            // checked, and the preview generator then published them as though
+            // they had been.
+            'h2h_summary' => $validated['h2h_summary'] ?? null,
+            'injury_notes' => $validated['injury_notes'] ?? null,
         ]);
 
         // Generate Claude predictions & Gemini preview automatically
@@ -100,33 +106,28 @@ class AdminMatchController extends Controller
         return view('admin.matches.settle', compact('match'));
     }
 
-    public function settleResult(Request $request, GameMatch $match)
+    public function settleResult(Request $request, GameMatch $match, TrackRecordService $trackRecordService)
     {
         $validated = $request->validate([
-            'home_score' => 'required|integer|min:0',
-            'away_score' => 'required|integer|min:0',
+            'home_score' => 'required|integer|min:0|max:99',
+            'away_score' => 'required|integer|min:0|max:99',
         ]);
 
         $h = (int) $validated['home_score'];
         $a = (int) $validated['away_score'];
-
-        $actualWdl = $h > $a ? 'Home Win' : ($h === $a ? 'Draw' : 'Away Win');
-        $actualGg = ($h > 0 && $a > 0) ? 'GG (Yes)' : 'NG (No)';
-        $actualOver = ($h + $a) > 2.5 ? 'Over 2.5' : 'Under 2.5';
 
         Result::updateOrCreate(
             ['match_id' => $match->id],
             [
                 'home_score' => $h,
                 'away_score' => $a,
-                'actual_outcome' => [
-                    'wdl' => $actualWdl,
-                    'gg' => $actualGg,
-                    'over_2_5' => $actualOver,
-                ],
+                'actual_outcome' => MarketOutcome::actual($h, $a),
                 'settled_at' => now(),
             ]
         );
+
+        // Published accuracy figures are cached; settling a match changes them.
+        $trackRecordService->flush();
 
         return redirect()->route('admin.matches.index')->with('success', "Match result settled: {$match->home_team} {$h} - {$a} {$match->away_team}. Public track record updated!");
     }

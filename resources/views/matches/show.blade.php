@@ -5,49 +5,57 @@
 @section('meta_keywords', strtolower($match->home_team . ' vs ' . $match->away_team . ' prediction, ' . $match->home_team . ' vs ' . $match->away_team . ' betting tips, ' . $match->league . ' AI preview, expected goals xG'))
 
 @section('schema_json_ld')
+@php
+    // Built with json_encode rather than written inline: a literal "@context"
+    // in the markup is compiled as Blade's @context directive and breaks the
+    // whole page, and json_encode also escapes team names correctly.
+    $fixture = $match->home_team . ' vs ' . $match->away_team;
+
+    $schema = [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'SportsEvent',
+            'name' => $fixture,
+            'startDate' => $match->kickoff_at->toIso8601String(),
+            'sport' => 'Soccer',
+            'location' => [
+                '@type' => 'Place',
+                'name' => $match->league,
+            ],
+            'homeTeam' => [
+                '@type' => 'SportsTeam',
+                'name' => $match->home_team,
+            ],
+            'awayTeam' => [
+                '@type' => 'SportsTeam',
+                'name' => $match->away_team,
+            ],
+            'description' => 'Tactical AI match narrative preview and Poisson Expected-Goals (xG) probability predictions for ' . $fixture . '.',
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'NewsArticle',
+            'headline' => $fixture . ' AI Match Preview & Prediction',
+            'description' => $fixture . ' expected goals (xG) tactical preview and AI match analysis.',
+            'datePublished' => ($match->created_at ?? now())->toIso8601String(),
+            'dateModified' => ($match->updated_at ?? now())->toIso8601String(),
+            'author' => [
+                '@type' => 'Organization',
+                'name' => 'Guaranteed Correct Analytics Engine',
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => 'GUARANTEED CORRECT',
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => asset('images/logo.png'),
+                ],
+            ],
+        ],
+    ];
+@endphp
 <script type="application/ld+json">
-[
-  {
-    "@context": "https://schema.org",
-    "@type": "SportsEvent",
-    "name": "{{ $match->home_team }} vs {{ $match->away_team }}",
-    "startDate": "{{ $match->kickoff_at->toIso8601String() }}",
-    "sport": "Soccer",
-    "location": {
-      "@type": "Place",
-      "name": "{{ $match->league }}"
-    },
-    "homeTeam": {
-      "@type": "SportsTeam",
-      "name": "{{ $match->home_team }}"
-    },
-    "awayTeam": {
-      "@type": "SportsTeam",
-      "name": "{{ $match->away_team }}"
-    },
-    "description": "Tactical AI match narrative preview and Poisson Expected-Goals (xG) probability predictions for {{ $match->home_team }} vs {{ $match->away_team }}."
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    "headline": "{{ $match->home_team }} vs {{ $match->away_team }} AI Match Preview & Prediction",
-    "description": "{{ $match->home_team }} vs {{ $match->away_team }} expected goals (xG) tactical preview and AI match analysis.",
-    "datePublished": "{{ $match->created_at ? $match->created_at->toIso8601String() : now()->toIso8601String() }}",
-    "dateModified": "{{ $match->updated_at ? $match->updated_at->toIso8601String() : now()->toIso8601String() }}",
-    "author": {
-      "@type": "Organization",
-      "name": "Prophet AI Analytics Engine"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "PROPHET AI",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "{{ asset('images/logo.png') }}"
-      }
-    }
-  }
-]
+{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
 </script>
 @endsection
 
@@ -138,7 +146,7 @@
                     </div>
                     <div>
                         <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-[10px] font-extrabold uppercase tracking-wider">
-                            <span>PROPHET AI EDITORIAL</span>
+                            <span>GUARANTEED CORRECT EDITORIAL</span>
                         </div>
                         <h1 class="text-xl sm:text-2xl font-extrabold text-white mt-0.5">
                             {{ $match->home_team }} vs {{ $match->away_team }} Prediction & Tactical Match Preview
@@ -165,7 +173,7 @@
                 <div class="flex items-center space-x-3">
                     <span class="px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-extrabold flex items-center space-x-1.5">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        <span>PROPHET AI CALCULATED PROBABILITIES</span>
+                        <span>GUARANTEED CORRECT CALCULATED PROBABILITIES</span>
                     </span>
                 </div>
                 <span class="text-xs text-slate-400 font-mono">Model: Poisson xG Matrix</span>

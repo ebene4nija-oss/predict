@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Prediction;
+use App\Services\PredictionService;
+use App\Support\MarketOutcome;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -15,11 +17,19 @@ class RankingJob implements ShouldQueue
         // Reset top 10 status
         Prediction::query()->update(['is_top10' => false]);
 
-        $markets = ['win_draw_loss', 'gg', 'over_2_5'];
+        // The confidence threshold gates *promotion* to the public list. It is
+        // deliberately applied here rather than in the engine, where it used to
+        // rewrite the stored probability upward.
+        $threshold = PredictionService::publishThreshold();
 
-        foreach ($markets as $market) {
-            $topIds = Prediction::where('market', $market)
-                ->orderBy('probability', 'desc')
+        foreach (MarketOutcome::MARKETS as $market) {
+            // Only rank fixtures that have not kicked off — a finished match
+            // with a high probability is not a pick anyone can act on.
+            $topIds = Prediction::forUpcomingMatches()
+                ->where('market', $market)
+                ->where('probability', '>=', $threshold)
+                ->orderByDesc('probability')
+                ->orderBy('id')
                 ->limit(10)
                 ->pluck('id');
 

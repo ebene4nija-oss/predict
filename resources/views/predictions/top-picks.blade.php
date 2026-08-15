@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'AI Top Picks — PROPHET AI Flagship Predictions')
+@section('title', 'AI Top Picks — GUARANTEED CORRECT Flagship Predictions')
 
 @section('content')
     <x-ad-banner type="header" />

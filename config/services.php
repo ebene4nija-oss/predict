@@ -39,22 +39,51 @@ return [
         'key' => env('GEMINI_API_KEY'),
     ],
 
+    'claude' => [
+        'key' => env('CLAUDE_API_KEY'),
+    ],
+
+    'fixtures' => [
+        // 'football_data' for live fixtures, 'sample' for invented development
+        // data (which refuses to run in production).
+        'provider' => env('FIXTURE_PROVIDER', 'football_data'),
+    ],
+
+    'football_data' => [
+        'token' => env('FOOTBALL_DATA_TOKEN', ''),
+    ],
+
+    /*
+    | Every credential below is also settable from the admin dashboard, which
+    | takes precedence. These entries remain as a bootstrap fallback so a fresh
+    | deployment can be seeded from the environment before anyone logs in.
+    */
+
     'flutterwave' => [
         'secret_key' => env('FLUTTERWAVE_SECRET_KEY'),
         'public_key' => env('FLUTTERWAVE_PUBLIC_KEY'),
+        // Secret hash configured on the Flutterwave dashboard; sent back as the
+        // `verif-hash` header on every webhook.
+        'webhook_hash' => env('FLUTTERWAVE_WEBHOOK_HASH', ''),
     ],
 
     'paypal' => [
         'client_id' => env('PAYPAL_CLIENT_ID'),
         'secret' => env('PAYPAL_SECRET'),
         'mode' => env('PAYPAL_MODE', 'sandbox'),
+        'plan_id' => env('PAYPAL_PLAN_ID', ''),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID', ''),
     ],
 
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN', ''),
-        'bot_username' => env('TELEGRAM_BOT_USERNAME', 'ProphetAIBot'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET', ''),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME', 'GuaranteedCorrectBot'),
         'channel_id' => env('TELEGRAM_CHANNEL_ID', ''),
-        'channel_username' => env('TELEGRAM_CHANNEL_USERNAME', 'ProphetAIPicks'),
-        'admin_support_url' => env('TELEGRAM_ADMIN_SUPPORT_URL', 'https://t.me/ProphetAISupport'),
+        'channel_username' => env('TELEGRAM_CHANNEL_USERNAME', 'GuaranteedCorrectPicks'),
+        // No default: a hardcoded fallback here shipped every visitor a
+        // "Admin Support" button pointing at a channel nobody had registered.
+        // Blank hides the button until an admin sets a real contact.
+        'admin_support_url' => env('TELEGRAM_ADMIN_SUPPORT_URL', ''),
     ],
 ];

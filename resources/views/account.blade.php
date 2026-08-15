@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'My Account & Operations Dashboard — Prophet AI')
+@section('title', 'My Account & Operations Dashboard — Guaranteed Correct')
 
 @section('content')
     <div class="max-w-4xl mx-auto py-6 space-y-6">
@@ -103,7 +103,7 @@
                         </div>
                     @else
                         <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-3">
-                            <p class="text-slate-300">Connect your account with <strong>@ProphetAIBot</strong> in 2 quick steps:</p>
+                            <p class="text-slate-300">Connect your account with <strong>{{ \App\Support\TelegramHandles::botHandle() }}</strong> in 2 quick steps:</p>
                             <ol class="list-decimal list-inside space-y-1 text-slate-400">
                                 <li>Click the button below to generate your personalized connect link.</li>
                                 <li>Press <strong>START</strong> inside Telegram to link your account.</li>

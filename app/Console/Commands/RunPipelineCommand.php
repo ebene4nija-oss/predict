@@ -16,7 +16,7 @@ class RunPipelineCommand extends Command
 
     public function handle(PredictionService $predictionService, PreviewGenerationService $previewService): int
     {
-        $this->info('Starting Prophet AI prediction engine pipeline...');
+        $this->info('Starting Guaranteed Correct prediction engine pipeline...');
 
         $this->info('1. Running Fixture Ingestion & Poisson Prediction Engine...');
         (new FixtureIngestionJob())->handle($predictionService, $previewService);

@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Log In — Prophet AI Platform')
+@section('title', 'Log In — Guaranteed Correct Platform')
 
 @section('content')
     <div class="max-w-md mx-auto py-10">
         <div class="p-8 rounded-3xl glass-panel space-y-6 border border-slate-800">
             <div class="text-center space-y-1">
                 <h1 class="text-2xl font-black text-white">Welcome Back</h1>
-                <p class="text-xs text-slate-400">Log in to access your Prophet AI account</p>
+                <p class="text-xs text-slate-400">Log in to access your Guaranteed Correct account</p>
             </div>
 
             <form action="{{ route('login') }}" method="POST" class="space-y-4">
@@ -31,6 +31,7 @@
                         <input type="checkbox" name="remember" class="rounded bg-slate-900 border-slate-700 text-sky-400 focus:ring-0">
                         <span>Remember me</span>
                     </label>
+                    <a href="{{ route('password.request') }}" class="text-[#38BDF8] hover:underline font-semibold">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-sm shadow-lg shadow-sky-500/20 transition-all">
@@ -38,14 +39,17 @@
                 </button>
             </form>
 
-            <!-- Quick Demo Login Credentials Helper -->
+            {{-- Seeded demo logins, local only. On a public site this block hands
+                 every visitor the admin address and its password. --}}
+            @env('local')
             <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-400 space-y-1.5">
                 <div class="font-bold text-slate-300 text-xs">Test Demo Logins (Password: <code class="text-sky-400">password</code>):</div>
-                <div>• Pro Subscriber: <code class="text-sky-400">subscriber@prophet.ai</code></div>
-                <div>• Expert Analyst: <code class="text-amber-400">expert@prophet.ai</code></div>
-                <div>• Free Account: <code class="text-slate-300">free@prophet.ai</code></div>
-                <div>• Admin Account: <code class="text-indigo-400">admin@prophet.ai</code></div>
+                <div>• Pro Subscriber: <code class="text-sky-400">subscriber@guaranteedcorrectscoretips.com</code></div>
+                <div>• Expert Analyst: <code class="text-amber-400">expert@guaranteedcorrectscoretips.com</code></div>
+                <div>• Free Account: <code class="text-slate-300">free@guaranteedcorrectscoretips.com</code></div>
+                <div>• Admin Account: <code class="text-indigo-400">admin@guaranteedcorrectscoretips.com</code></div>
             </div>
+            @endenv
 
             <div class="text-center text-xs text-slate-400">
                 Don't have an account? <a href="{{ route('register') }}" class="text-[#38BDF8] font-bold hover:underline">Sign up</a>

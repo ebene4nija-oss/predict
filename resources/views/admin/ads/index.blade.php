@@ -26,7 +26,7 @@
         <!-- Page Header -->
         <div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Ad Banner & Sponsorship Control</h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">Configure global betting partner ad banners displayed to free-tier users across Prophet AI.</p>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">Configure global betting partner ad banners displayed to free-tier users across Guaranteed Correct.</p>
         </div>
 
         <!-- Sponsor Settings Form -->
@@ -43,6 +43,16 @@
                         </select>
                     </div>
 
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Ad Source</label>
+                        <select name="ad_mode" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-semibold focus:border-sky-400 focus:outline-none">
+                            <option value="house" {{ old('ad_mode', $ads['ad_mode']) === 'house' ? 'selected' : '' }}>House Banner (earns nothing)</option>
+                            <option value="network" {{ old('ad_mode', $ads['ad_mode']) === 'network' ? 'selected' : '' }}>Ad Network Tags (live revenue)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Sponsor / Partner Name</label>
                         <input type="text" name="ad_partner_name" value="{{ old('ad_partner_name', $ads['ad_partner_name']) }}" required placeholder="e.g. Official Betting Partner" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-sky-400 focus:outline-none">
@@ -68,6 +78,51 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-300 uppercase mb-2">CTA Target URL</label>
                         <input type="text" name="ad_cta_url" value="{{ old('ad_cta_url', $ads['ad_cta_url']) }}" required placeholder="https://..." class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:border-sky-400 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Ad Network Tags -->
+                <div class="pt-4 border-t border-slate-800 space-y-5">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-white">Ad Network Tags</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">
+                            Paste the tags from your ad network (Google Ad Manager, AdSense, or similar).
+                            These are inserted into the page exactly as given, so paste only code you got
+                            from the network itself. They render for free-tier visitors only &mdash;
+                            subscribers load no ad script at all. Used when <strong>Ad Source</strong> is
+                            set to Ad Network Tags.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Loader Script (goes in &lt;head&gt;)</label>
+                        <textarea name="ad_network_head" rows="3" placeholder="&lt;script async src=&quot;...&quot;&gt;&lt;/script&gt;" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-[11px] font-mono focus:border-sky-400 focus:outline-none">{{ old('ad_network_head', $ads['ad_network_head']) }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Default Unit</label>
+                        <p class="text-[11px] text-slate-500 mb-2">Used for any placement left blank below &mdash; paste a responsive unit here and you can leave the rest empty.</p>
+                        <textarea name="ad_network_default" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-[11px] font-mono focus:border-sky-400 focus:outline-none">{{ old('ad_network_default', $ads['ad_network_default']) }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        @foreach ([
+                            'ad_network_header' => 'Header Placement',
+                            'ad_network_in_content' => 'In-Content Placement',
+                            'ad_network_sidebar' => 'Sidebar Placement',
+                            'ad_network_footer' => 'Footer Placement',
+                        ] as $field => $label)
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 uppercase mb-2">{{ $label }}</label>
+                                <textarea name="{{ $field }}" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-[11px] font-mono focus:border-sky-400 focus:outline-none">{{ old($field, $ads[$field]) }}</textarea>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-300/90">
+                        Gambling and betting ads are restricted in several of the markets this site serves,
+                        and carrying them cuts against the trust pages. Decide deliberately whether to allow
+                        that category in your network's settings &mdash; it is not a default worth accepting.
                     </div>
                 </div>
 

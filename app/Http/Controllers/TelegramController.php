@@ -21,7 +21,9 @@ class TelegramController extends Controller
             $user->update(['telegram_link_token' => Str::random(32)]);
         }
 
-        $botUsername = \App\Models\Setting::get('telegram_bot_username', config('services.telegram.bot_username', 'ProphetAIBot'));
+        // Setting::get() treats a saved empty string as a real value, so an
+        // admin who blanks the field would produce a t.me link to nowhere.
+        $botUsername = \App\Support\TelegramHandles::botUsername();
 
         return view('account', [
             'user' => $user,
@@ -79,7 +81,7 @@ class TelegramController extends Controller
 
         $sent = $telegram->sendMessage(
             $user->telegram_chat_id,
-            "✅ *Connection Verified!*\n\nHey {$user->name}, your Prophet AI Telegram alerts are working perfectly!\n\n🤖 You'll receive daily AI picks and match alerts here."
+            "✅ *Connection Verified!*\n\nHey {$user->name}, your Guaranteed Correct Telegram alerts are working perfectly!\n\n🤖 You'll receive daily AI picks and match alerts here."
         );
 
         if ($sent) {
@@ -94,6 +96,13 @@ class TelegramController extends Controller
      */
     public function handleWebhook(Request $request, TelegramService $telegram)
     {
+        // Telegram echoes back the secret token registered with setWebhook.
+        // Without this check anyone could POST forged updates and hijack the
+        // account-linking flow.
+        if (! $telegram->verifyWebhookSecret($request->header('X-Telegram-Bot-Api-Secret-Token'))) {
+            return response()->json(['ok' => false], 403);
+        }
+
         $data = $request->all();
 
         // Process /start command with link token
@@ -121,12 +130,12 @@ class TelegramController extends Controller
                         'telegram_link_token' => null,
                     ]);
 
-                    $telegram->sendMessage($chatId, "🎉 *Connected Successfully!*\n\nHey {$user->name}, your Prophet AI account is now linked!\n\n✅ Daily AI picks\n✅ Match kickoff alerts\n✅ Expert pick notifications\n\nYou'll start receiving alerts automatically.");
+                    $telegram->sendMessage($chatId, "🎉 *Connected Successfully!*\n\nHey {$user->name}, your Guaranteed Correct account is now linked!\n\n✅ Daily AI picks\n✅ Match kickoff alerts\n✅ Expert pick notifications\n\nYou'll start receiving alerts automatically.");
                 } else {
-                    $telegram->sendMessage($chatId, "❌ Invalid or expired link token.\n\nPlease generate a new connection link from your Prophet AI dashboard.");
+                    $telegram->sendMessage($chatId, "❌ Invalid or expired link token.\n\nPlease generate a new connection link from your Guaranteed Correct dashboard.");
                 }
             } else {
-                $telegram->sendMessage($chatId, "👋 Hey {$firstName}!\n\nTo connect your Prophet AI account, visit your dashboard at ProphetAI.com and click 'Connect Telegram'. You'll receive a personalized link to send here.");
+                $telegram->sendMessage($chatId, "👋 Hey {$firstName}!\n\nTo connect your Guaranteed Correct account, visit your dashboard at guaranteedcorrectscoretips.com and click 'Connect Telegram'. You'll receive a personalized link to send here.");
             }
         }
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Public Track Record & Accuracy Audit — Prophet AI')
+@section('title', 'Public Track Record & Accuracy Audit — Guaranteed Correct')
 
 @section('content')
     <x-ad-banner type="header" />
@@ -43,6 +43,74 @@
             </div>
         </div>
 
+        <!-- Profitability & Calibration -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            @php $roi = $stats['ai']['overall']['roi']; @endphp
+            <div class="p-6 rounded-2xl glass-panel border border-slate-800 space-y-2">
+                <div class="text-xs text-slate-400 font-semibold uppercase">Return on Investment</div>
+                @if($roi === null)
+                    <div class="text-2xl font-black text-slate-500 mt-1 font-mono">Not yet measurable</div>
+                    <p class="text-[11px] text-slate-500">
+                        ROI needs the price each pick was available at. Once odds are recorded, this
+                        shows profit or loss per unit staked.
+                    </p>
+                @else
+                    <div class="text-3xl font-black mt-1 font-mono {{ $roi >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                        {{ $roi > 0 ? '+' : '' }}{{ $roi }}%
+                    </div>
+                    <div class="text-[11px] text-slate-500">
+                        {{ $stats['ai']['overall']['profit'] > 0 ? '+' : '' }}{{ $stats['ai']['overall']['profit'] }} units
+                        across {{ $stats['ai']['overall']['staked'] }} priced picks
+                    </div>
+                    <p class="text-[11px] text-slate-500">
+                        Profit per unit staked at the recorded odds. A high win rate at short prices
+                        can still lose money, so this is the figure that matters.
+                    </p>
+                @endif
+            </div>
+
+            <div class="p-6 rounded-2xl glass-panel border border-slate-800 space-y-3">
+                <div class="flex items-baseline justify-between">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Calibration</div>
+                    @if($stats['calibration']['brier'] !== null)
+                        <div class="text-xs font-mono text-slate-300">
+                            Brier <span class="text-white font-bold">{{ $stats['calibration']['brier'] }}</span>
+                            <span class="text-slate-500">(n={{ $stats['calibration']['sample'] }})</span>
+                        </div>
+                    @endif
+                </div>
+
+                @if($stats['calibration']['sample'] === 0)
+                    <p class="text-[11px] text-slate-500">No settled picks yet.</p>
+                @else
+                    <p class="text-[11px] text-slate-500">
+                        Do our stated probabilities hold up? Each band compares what we claimed
+                        against what actually happened. Closer is better; lower Brier is better.
+                    </p>
+                    <div class="space-y-1.5">
+                        @foreach($stats['calibration']['buckets'] as $bucket)
+                            @continue($bucket['total'] === 0)
+                            <div class="flex items-center justify-between text-[11px] font-mono">
+                                <span class="text-slate-400 w-20">{{ $bucket['label'] }}</span>
+                                <div class="flex-1 mx-3 h-2 rounded-full bg-slate-800 overflow-hidden">
+                                    <div class="h-full bg-sky-400/70" style="width: {{ $bucket['actual'] }}%"></div>
+                                </div>
+                                <span class="text-slate-300 w-28 text-right">
+                                    {{ $bucket['actual'] }}% actual
+                                    <span class="text-slate-500">/ {{ $bucket['total'] }}</span>
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500">
+            Only picks published before kickoff are counted. Predictions are locked at publication
+            and cannot be edited once a fixture has started.
+        </p>
+
         <!-- Historical Settled Results Log -->
         <div class="space-y-4">
             <h2 class="text-xl font-bold text-white">Settled Match Results Audit Log</h2>
@@ -65,15 +133,14 @@
                         <div class="flex flex-wrap items-center gap-3">
                             @foreach($result->match->predictions as $pred)
                                 @php
-                                    $h = $result->home_score;
-                                    $a = $result->away_score;
-                                    $actual = match($pred->market) {
-                                        'win_draw_loss' => $h > $a ? 'Home Win' : ($h === $a ? 'Draw' : 'Away Win'),
-                                        'gg' => ($h > 0 && $a > 0) ? 'GG (Yes)' : 'NG (No)',
-                                        'over_2_5' => ($h + $a) > 2.5 ? 'Over 2.5' : 'Under 2.5',
-                                        default => '',
-                                    };
-                                    $won = $pred->pick === $actual;
+                                    // Same grader the published accuracy figures use,
+                                    // so a badge here can never contradict the headline stats.
+                                    $won = \App\Support\MarketOutcome::isWinningPick(
+                                        $pred->market,
+                                        $pred->pick,
+                                        $result->home_score,
+                                        $result->away_score,
+                                    );
                                 @endphp
 
                                 <div class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 border {{ $won ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30' }}">
@@ -86,6 +153,12 @@
                     </div>
                 @endforeach
             </div>
+
+            @if($history->hasPages())
+                <div class="pt-2">
+                    {{ $history->links() }}
+                </div>
+            @endif
         </div>
     </div>
 @endsection

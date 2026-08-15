@@ -11,12 +11,31 @@ class TelegramService
     protected string $token;
     protected string $baseUrl;
     protected ?string $channelId;
+    protected string $webhookSecret;
 
     public function __construct()
     {
-        $this->token = Setting::get('telegram_bot_token', config('services.telegram.bot_token', ''));
+        $this->token = Setting::credential('telegram_bot_token', 'services.telegram.bot_token');
         $this->baseUrl = "https://api.telegram.org/bot{$this->token}";
-        $this->channelId = Setting::get('telegram_channel_id', config('services.telegram.channel_id'));
+        $this->channelId = Setting::credential('telegram_channel_id', 'services.telegram.channel_id');
+        $this->webhookSecret = Setting::credential('telegram_webhook_secret', 'services.telegram.webhook_secret');
+    }
+
+    /**
+     * Confirm an incoming update really came from Telegram.
+     *
+     * Telegram returns the secret registered via setWebhook in the
+     * X-Telegram-Bot-Api-Secret-Token header on every update.
+     */
+    public function verifyWebhookSecret(?string $provided): bool
+    {
+        if ($this->webhookSecret === '') {
+            Log::error('Telegram webhook secret is not configured; rejecting update.');
+
+            return false;
+        }
+
+        return $provided !== null && hash_equals($this->webhookSecret, $provided);
     }
 
     /**
@@ -67,7 +86,7 @@ class TelegramService
     public function formatDailyPicks(iterable $predictions): string
     {
         $lines = [
-            "⚽ *PROPHET AI — Daily Top Picks* ⚽",
+            "⚽ *GUARANTEED CORRECT — Daily Top Picks* ⚽",
             "📅 " . now()->format('l, M d Y'),
             "━━━━━━━━━━━━━━━━━━━━━",
             "",
@@ -94,7 +113,7 @@ class TelegramService
 
         $lines[] = "━━━━━━━━━━━━━━━━━━━━━";
         $lines[] = "🤖 Powered by Claude AI + Poisson xG Engine";
-        $lines[] = "🔗 Full analysis at ProphetAI.com";
+        $lines[] = "🔗 Full analysis at guaranteedcorrectscoretips.com";
         $lines[] = "";
         $lines[] = "_Predictions, not guarantees. 18+ only._";
 
@@ -121,7 +140,7 @@ class TelegramService
         }
 
         $lines[] = "";
-        $lines[] = "📖 Full preview on ProphetAI.com";
+        $lines[] = "📖 Full preview on guaranteedcorrectscoretips.com";
 
         return implode("\n", $lines);
     }
@@ -135,6 +154,7 @@ class TelegramService
             $response = Http::post("{$this->baseUrl}/setWebhook", [
                 'url' => $url,
                 'allowed_updates' => ['message'],
+                'secret_token' => $this->webhookSecret,
             ]);
 
             return $response->successful();

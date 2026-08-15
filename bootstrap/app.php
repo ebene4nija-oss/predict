@@ -14,6 +14,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\TrackPageviewsMiddleware::class,
         ]);
+
+        // Gateways and Telegram post server-to-server and cannot carry a CSRF
+        // token. Both endpoints authenticate the caller by signature instead.
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/payment',
+            'webhooks/telegram',
+        ]);
+
         $middleware->alias([
             'subscriber' => \App\Http\Middleware\EnsureSubscriber::class,
             'admin' => \App\Http\Middleware\EnsureAdmin::class,

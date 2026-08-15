@@ -58,6 +58,17 @@ class SitemapController extends Controller
             ],
         ];
 
+        // Legal pages: rarely change, but they need to be indexable — payment
+        // gateways check they are publicly reachable.
+        foreach (['legal.terms', 'legal.privacy', 'legal.refunds'] as $legalRoute) {
+            $urls[] = [
+                'loc' => route($legalRoute),
+                'lastmod' => now()->startOfMonth()->toIso8601String(),
+                'changefreq' => 'yearly',
+                'priority' => '0.3',
+            ];
+        }
+
         foreach ($matches as $match) {
             $urls[] = [
                 'loc' => route('matches.show', $match->id),

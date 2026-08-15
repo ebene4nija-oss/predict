@@ -12,6 +12,7 @@ use App\Models\Subscription;
 use App\Models\Setting;
 use App\Services\PredictionService;
 use App\Services\PreviewGenerationService;
+use App\Support\MarketOutcome;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -20,6 +21,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->assertNotProduction();
+
         // Seed default AI settings & parameters
         Setting::set('gemini_api_key', env('GEMINI_API_KEY', ''));
         Setting::set('claude_api_key', env('CLAUDE_API_KEY', ''));
@@ -31,28 +34,28 @@ class DatabaseSeeder extends Seeder
         // 1. Create Users
         $admin = User::create([
             'name' => 'Platform Admin',
-            'email' => 'admin@prophet.ai',
+            'email' => 'admin@guaranteedcorrectscoretips.com',
             'password' => Hash::make('password'),
             'role' => 'admin',
         ]);
 
         $expertUser = User::create([
             'name' => 'Dr. Marcus Vance',
-            'email' => 'expert@prophet.ai',
+            'email' => 'expert@guaranteedcorrectscoretips.com',
             'password' => Hash::make('password'),
             'role' => 'expert',
         ]);
 
         $subscriberUser = User::create([
             'name' => 'Pro Subscriber',
-            'email' => 'subscriber@prophet.ai',
+            'email' => 'subscriber@guaranteedcorrectscoretips.com',
             'password' => Hash::make('password'),
             'role' => 'subscriber',
         ]);
 
         $freeUser = User::create([
             'name' => 'Free User',
-            'email' => 'free@prophet.ai',
+            'email' => 'free@guaranteedcorrectscoretips.com',
             'password' => Hash::make('password'),
             'role' => 'free',
         ]);
@@ -83,8 +86,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 3. Create Upcoming Fixtures & Predictions
-        $predictionService = new PredictionService();
-        $previewService = new PreviewGenerationService();
+        // Resolved from the container: PredictionService takes constructor
+        // dependencies now, and newing it up here fatally errored — the seeder
+        // had not actually run since that change.
+        $predictionService = app(PredictionService::class);
+        $previewService = app(PreviewGenerationService::class);
 
         $fixtures = [
             [
@@ -222,10 +228,14 @@ class DatabaseSeeder extends Seeder
                 'preview_text' => "Historical match analysis.",
             ]);
 
+            // These are deliberately winning picks, so they are read straight off
+            // the actual outcome rather than restating the grading rules here.
+            $outcome = MarketOutcome::actual($p['hScore'], $p['aScore']);
+
             Prediction::create([
                 'match_id' => $pastMatch->id,
                 'market' => 'win_draw_loss',
-                'pick' => $p['hScore'] > $p['aScore'] ? 'Home Win' : ($p['hScore'] === $p['aScore'] ? 'Draw' : 'Away Win'),
+                'pick' => $outcome['win_draw_loss'],
                 'probability' => 0.7800,
                 'is_top10' => false,
                 'is_ai5' => false,
@@ -234,7 +244,7 @@ class DatabaseSeeder extends Seeder
             Prediction::create([
                 'match_id' => $pastMatch->id,
                 'market' => 'over_2_5',
-                'pick' => ($p['hScore'] + $p['aScore']) > 2.5 ? 'Over 2.5' : 'Under 2.5',
+                'pick' => $outcome['over_2_5'],
                 'probability' => 0.7500,
             ]);
 
@@ -242,7 +252,7 @@ class DatabaseSeeder extends Seeder
                 'expert_id' => $expert->id,
                 'match_id' => $pastMatch->id,
                 'market' => 'win_draw_loss',
-                'pick' => $p['hScore'] > $p['aScore'] ? 'Home Win' : ($p['hScore'] === $p['aScore'] ? 'Draw' : 'Away Win'),
+                'pick' => $outcome['win_draw_loss'],
                 'rationale' => "Correct tactical read on dominant home performance.",
                 'confidence' => 0.8000,
             ]);
@@ -251,13 +261,34 @@ class DatabaseSeeder extends Seeder
                 'match_id' => $pastMatch->id,
                 'home_score' => $p['hScore'],
                 'away_score' => $p['aScore'],
-                'actual_outcome' => [
-                    'wdl' => $p['hScore'] > $p['aScore'] ? 'Home Win' : ($p['hScore'] === $p['aScore'] ? 'Draw' : 'Away Win'),
-                    'gg' => ($p['hScore'] > 0 && $p['aScore'] > 0) ? 'GG (Yes)' : 'NG (No)',
-                    'over_2_5' => ($p['hScore'] + $p['aScore']) > 2.5 ? 'Over 2.5' : 'Under 2.5',
-                ],
+                'actual_outcome' => $outcome,
                 'settled_at' => Carbon::now()->subDays(2),
             ]);
         }
+    }
+
+    /**
+     * Refuse to seed demo data into a live installation.
+     *
+     * This seeder creates an admin on a published address with the password
+     * "password", three other known logins, an unearned active subscription and
+     * a set of invented fixtures with invented results feeding the public track
+     * record. On a live box that is a site takeover plus fabricated accuracy
+     * figures, so nothing here has a legitimate production use.
+     *
+     * `db:seed` already prompts before running in production, but --force skips
+     * that prompt and --force is what deploy scripts carry by habit. This check
+     * is not bypassable: seed a real admin with `php artisan admin:create`.
+     */
+    protected function assertNotProduction(): void
+    {
+        if (! app()->isProduction()) {
+            return;
+        }
+
+        throw new \RuntimeException(
+            'DatabaseSeeder holds demo accounts and invented fixtures and will not run in '
+            .'production. Create the first administrator with `php artisan admin:create`.'
+        );
     }
 }

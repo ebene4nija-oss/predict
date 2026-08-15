@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'PROPHET AI — Premium Football Predictions & Expert Picks')
+@section('title', 'GUARANTEED CORRECT — Premium Football Predictions & Expert Picks')
 
 @section('content')
     <!-- Top Header Ad Placement (Gated for Subscribers) -->
@@ -13,7 +13,7 @@
     <section class="relative py-10 md:py-14 text-center max-w-4xl mx-auto">
         <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[#38BDF8] text-xs font-semibold mb-6">
             <span class="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse"></span>
-            <span>PROPHET xG Poisson Probability Engine 2.4</span>
+            <span>GUARANTEED CORRECT xG Poisson Probability Engine 2.4</span>
         </div>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
             AI Football Predictions Backed By <span class="ai-gradient-text">Transparent Track Records</span>

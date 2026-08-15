@@ -1,9 +1,10 @@
 @props(['type' => 'banner'])
 
 @php
-    $channelUsername = config('services.telegram.channel_username', 'ProphetAIPicks');
-    $channelUrl = "https://t.me/" . ltrim($channelUsername, '@');
-    $supportUrl = config('services.telegram.admin_support_url', 'https://t.me/ProphetAISupport');
+    use App\Support\TelegramHandles;
+
+    $channelUrl = TelegramHandles::channelUrl();
+    $supportUrl = TelegramHandles::supportUrl();
 @endphp
 
 <div class="my-6 p-5 rounded-3xl bg-gradient-to-r from-sky-950/60 via-slate-900/90 to-indigo-950/60 border border-sky-500/30 shadow-xl relative overflow-hidden">
@@ -27,9 +28,13 @@
                 <span>Join VIP Channel</span>
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
-            <a href="{{ $supportUrl }}" target="_blank" rel="noopener noreferrer" class="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
-                <span>💬 Admin Support</span>
-            </a>
+            {{-- No support contact configured yet: a button linking to nowhere
+                 is worse than no button. --}}
+            @if($supportUrl !== '')
+                <a href="{{ $supportUrl }}" target="_blank" rel="noopener noreferrer" class="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                    <span>💬 Admin Support</span>
+                </a>
+            @endif
         </div>
     </div>
 </div>

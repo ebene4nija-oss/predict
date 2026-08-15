@@ -23,8 +23,7 @@ class PredictionEngineTest extends TestCase
             'away_form' => ['gf' => 1.2, 'ga' => 1.6],
         ]);
 
-        $service = new PredictionService();
-        $predictions = $service->calculateAndStore($match);
+        $predictions = app(PredictionService::class)->calculateAndStore($match);
 
         $this->assertArrayHasKey('win_draw_loss', $predictions);
         $this->assertArrayHasKey('gg', $predictions);

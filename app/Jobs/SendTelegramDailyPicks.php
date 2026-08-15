@@ -38,8 +38,11 @@ class SendTelegramDailyPicks implements ShouldQueue
         Log::info('Telegram daily picks posted to channel.');
 
         // 2. Send personal DMs to opted-in subscribers
+        // Paid picks, so the subscription decides — not the role flag, which can
+        // outlive the payment it stands for.
         $users = User::where('telegram_notifications_enabled', true)
             ->whereNotNull('telegram_chat_id')
+            ->with('subscription')
             ->where(function ($q) {
                 $q->where('role', 'subscriber')
                   ->orWhere('role', 'admin');
@@ -48,14 +51,18 @@ class SendTelegramDailyPicks implements ShouldQueue
 
         $sent = 0;
         foreach ($users as $user) {
+            if (! $user->isSubscriber()) {
+                continue;
+            }
+
             $personalMessage = "🔔 *Your Daily AI Picks, {$user->name}!*\n\n" . $message;
             $telegram->sendMessage($user->telegram_chat_id, $personalMessage);
             $sent++;
 
-            // Rate limit: max 30 msgs/sec for Telegram API
-            if ($sent % 25 === 0) {
-                sleep(1);
-            }
+            // Telegram allows ~30 messages/second. Pace with usleep rather than
+            // a whole-second sleep: a full second per 25 users blocked the
+            // worker for minutes once the subscriber list grew.
+            usleep(40_000);
         }
 
         Log::info("SendTelegramDailyPicks: Sent DMs to {$sent} subscribers.");

@@ -50,7 +50,7 @@ class PaywallAndAdScopingTest extends TestCase
 
     public function test_active_subscriber_sees_zero_ads_and_unlocked_content(): void
     {
-        $subscriber = User::factory()->create(['role' => 'subscriber']);
+        $subscriber = User::factory()->subscriber()->create();
         Subscription::create([
             'user_id' => $subscriber->id,
             'gateway' => 'flutterwave',

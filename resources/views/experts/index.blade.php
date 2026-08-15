@@ -26,8 +26,12 @@
         </div>
 
         <div class="space-y-4">
-            @foreach($expertPicks as $index => $pick)
+            @foreach($expertPicks as $pick)
                 @php
+                    // Absolute position across all pages, not the per-page index:
+                    // a page-relative index would re-open the first two picks on
+                    // every page and hand free users the whole list.
+                    $index = ($expertPicks->firstItem() ?? 1) - 1 + $loop->index;
                     $isUnlocked = $isSubscriber || ($index < 2);
                 @endphp
 
@@ -103,6 +107,12 @@
                     </div>
                 @endif
             @endforeach
+
+            @if($expertPicks->hasPages())
+                <div class="pt-4">
+                    {{ $expertPicks->links() }}
+                </div>
+            @endif
         </div>
     </div>
 @endsection
