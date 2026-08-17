@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\GameMatch;
 use App\Models\Prediction;
 use App\Models\Setting;
+use App\Support\MarketRegistry;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -95,9 +96,15 @@ class PredictionService
     /**
      * The probability a pick must reach before it can be promoted to the
      * public Top 10 / AI Top 5 lists.
+     *
+     * Resolved per market: markets differ in natural range by up to forty
+     * points, so one global figure would publish an entire market or none of
+     * it. See MarketRegistry::threshold().
      */
-    public static function publishThreshold(): float
+    public static function publishThreshold(?string $market = null): float
     {
-        return (float) Setting::get('min_confidence_threshold', 0.55);
+        return $market === null
+            ? (float) Setting::get('min_confidence_threshold', 0.55)
+            : MarketRegistry::threshold($market);
     }
 }

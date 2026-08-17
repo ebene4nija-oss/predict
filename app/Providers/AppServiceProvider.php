@@ -6,6 +6,7 @@ use App\Contracts\FixtureProvider;
 use App\Models\Setting;
 use App\Services\Fixtures\FootballDataProvider;
 use App\Services\Fixtures\SampleFixtureProvider;
+use App\Support\MailSettings;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -44,6 +45,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('auth', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip());
         });
+
+        // Must precede the guard below: SMTP configured from the dashboard is
+        // a valid transport, and the guard would otherwise still see the
+        // bootstrap `log` mailer from .env and refuse to boot.
+        MailSettings::apply();
 
         $this->assertMailIsDeliverable();
     }

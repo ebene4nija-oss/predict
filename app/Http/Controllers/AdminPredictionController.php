@@ -4,20 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Prediction;
 use App\Services\PredictionService;
+use App\Support\MarketRegistry;
 use Illuminate\Http\Request;
 
 class AdminPredictionController extends Controller
 {
     public function index(Request $request)
     {
-        $market = $request->get('market', 'win_draw_loss');
+        $requested = (string) $request->get('market', '');
+
+        // Unlike the public list, admin can inspect every registered market —
+        // including win_draw_loss, which has no public tab of its own.
+        $market = MarketRegistry::has($requested) ? $requested : MarketRegistry::DEFAULT_KEY;
 
         $predictions = Prediction::with('match')
             ->where('market', $market)
             ->orderBy('probability', 'desc')
             ->paginate(20);
 
-        return view('admin.predictions.index', compact('predictions', 'market'));
+        $markets = MarketRegistry::all();
+
+        return view('admin.predictions.index', compact('predictions', 'market', 'markets'));
     }
 
     public function update(Request $request, Prediction $prediction, PredictionService $predictions)

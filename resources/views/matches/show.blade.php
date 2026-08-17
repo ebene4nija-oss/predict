@@ -89,8 +89,12 @@
             <div class="grid grid-cols-3 items-center gap-4 py-4 relative z-10">
                 <!-- Home Team -->
                 <div class="flex flex-col items-center space-y-3">
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-sky-500/40 flex items-center justify-center text-2xl font-black text-sky-400 shadow-2xl shadow-sky-500/10">
-                        {{ strtoupper(substr($match->home_team, 0, 3)) }}
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-sky-500/40 flex items-center justify-center text-2xl font-black text-sky-400 shadow-2xl shadow-sky-500/10 p-3">
+                        @if($match->crestFor('home'))
+                            <img src="{{ $match->crestFor('home') }}" alt="{{ $match->home_team }} crest" class="w-full h-full object-contain">
+                        @else
+                            {{ strtoupper(substr($match->home_team, 0, 3)) }}
+                        @endif
                     </div>
                     <span class="font-black text-lg sm:text-2xl text-white tracking-tight">{{ $match->home_team }}</span>
                     <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-400 font-mono">
@@ -108,8 +112,12 @@
 
                 <!-- Away Team -->
                 <div class="flex flex-col items-center space-y-3">
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-indigo-500/40 flex items-center justify-center text-2xl font-black text-indigo-400 shadow-2xl shadow-indigo-500/10">
-                        {{ strtoupper(substr($match->away_team, 0, 3)) }}
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-indigo-500/40 flex items-center justify-center text-2xl font-black text-indigo-400 shadow-2xl shadow-indigo-500/10 p-3">
+                        @if($match->crestFor('away'))
+                            <img src="{{ $match->crestFor('away') }}" alt="{{ $match->away_team }} crest" class="w-full h-full object-contain">
+                        @else
+                            {{ strtoupper(substr($match->away_team, 0, 3)) }}
+                        @endif
                     </div>
                     <span class="font-black text-lg sm:text-2xl text-white tracking-tight">{{ $match->away_team }}</span>
                     <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-400 font-mono">
@@ -162,7 +170,15 @@
             <div class="p-5 rounded-2xl bg-[#0B0F17]/90 border border-slate-800/80 text-sm sm:text-base leading-relaxed text-slate-200 whitespace-pre-line relative">
                 <span class="text-3xl text-sky-500/40 font-serif leading-none absolute top-2 left-3 select-none">“</span>
                 <div class="pl-4">
-                    {{ $match->preview_text ?? 'Tactical match analysis will update shortly.' }}
+                    {{-- The lead-time setting governs publishing, not just
+                         ingestion: a fixture added by hand months out has a
+                         preview on file that is not ready to be read. --}}
+                    @if($match->previewIsPublishable())
+                        {{ $match->preview_text }}
+                    @else
+                        @php $leadDays = \App\Models\GameMatch::previewLeadDays(); @endphp
+                        The preview for this fixture is published {{ $leadDays }} {{ \Illuminate\Support\Str::plural('day', $leadDays) }} before kickoff.
+                    @endif
                 </div>
             </div>
         </article>

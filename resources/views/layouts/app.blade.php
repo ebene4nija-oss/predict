@@ -102,6 +102,7 @@
                     Expert Picks
                 </a>
                 <a href="{{ route('track-record') }}" class="transition-colors hover:text-[#38BDF8] {{ request()->routeIs('track-record') ? 'text-[#38BDF8] font-semibold' : 'text-slate-300' }}">Track Record</a>
+                <a href="{{ route('blog.index') }}" class="transition-colors hover:text-[#38BDF8] {{ request()->routeIs('blog.*') ? 'text-[#38BDF8] font-semibold' : 'text-slate-300' }}">News</a>
                 <a href="{{ route('how-ai-works') }}" class="transition-colors hover:text-[#38BDF8] {{ request()->routeIs('how-ai-works') ? 'text-[#38BDF8] font-semibold' : 'text-slate-300' }}">How AI Works</a>
             </nav>
 
@@ -149,6 +150,7 @@
         <a href="{{ route('top.picks') }}" class="{{ request()->routeIs('top.picks') ? 'text-[#38BDF8] font-bold' : 'text-slate-400' }}">Top Picks</a>
         <a href="{{ route('expert.picks') }}" class="{{ request()->routeIs('expert.picks') ? 'text-[#F5A623] font-bold' : 'text-slate-400' }}">Expert Picks</a>
         <a href="{{ route('track-record') }}" class="{{ request()->routeIs('track-record') ? 'text-[#38BDF8] font-bold' : 'text-slate-400' }}">Track Record</a>
+        <a href="{{ route('blog.index') }}" class="{{ request()->routeIs('blog.*') ? 'text-[#38BDF8] font-bold' : 'text-slate-400' }}">News</a>
         <a href="{{ route('subscription.pricing') }}" class="text-sky-400 font-semibold">Pricing</a>
     </div>
 
@@ -193,6 +195,7 @@
                     <a href="{{ route('top.picks') }}" class="hover:text-slate-200">Top Picks</a>
                     <a href="{{ route('expert.picks') }}" class="hover:text-slate-200">Expert Picks</a>
                     <a href="{{ route('track-record') }}" class="hover:text-slate-200">Track Record</a>
+                    <a href="{{ route('blog.index') }}" class="hover:text-slate-200">News</a>
                     <a href="{{ route('how-ai-works') }}" class="hover:text-slate-200">How AI Works</a>
                     <a href="{{ route('subscription.pricing') }}" class="hover:text-slate-200">Pricing</a>
                     <a href="{{ route('legal.terms') }}" class="hover:text-slate-200">Terms</a>

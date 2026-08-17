@@ -63,7 +63,7 @@
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div class="space-y-1">
                                 <div class="text-xs text-slate-400 font-medium">
-                                    Market: <span class="text-amber-400 font-bold">{{ strtoupper(str_replace('_', ' ', $pick->market)) }}</span>
+                                    Market: <span class="text-amber-400 font-bold">{{ get_market_label($pick->market) }}</span>
                                 </div>
                                 <div class="text-lg font-black text-white">
                                     Recommendation: <span class="text-amber-400">{{ $pick->pick }}</span>

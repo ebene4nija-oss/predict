@@ -33,6 +33,16 @@ class PoissonEngine
     public const MAX_GOALS = 10;
 
     /**
+     * Share of a match's expected goals that falls in the first half.
+     *
+     * First halves are reliably the quieter one — sides start cautiously and
+     * chase late — and across the major European leagues roughly 45% of goals
+     * arrive before the break. Splitting 50/50 would systematically overprice
+     * every first-half market.
+     */
+    public const DEFAULT_FIRST_HALF_SHARE = 0.45;
+
+    /**
      * Expected goals for each side.
      *
      * @param  array{gf?: float, ga?: float}  $homeForm  Goals for/against per game.
@@ -171,6 +181,60 @@ class PoissonEngine
             'away_win' => $awayWin,
             'gg' => $bothScored,
             'over_2_5' => $over,
+        ];
+    }
+
+    /**
+     * Joint score probability matrix for the first half alone.
+     *
+     * Rho is forced to zero. The Dixon-Coles correction is fitted to full-time
+     * scorelines, and reusing that rho against first-half lambdas roughly a
+     * third their size would apply a correction calibrated for a distribution
+     * this is not — inflating the 1-1 cell of a half where 1-1 is rare.
+     *
+     * @return array<int, array<int, float>>
+     */
+    public static function firstHalfMatrix(
+        float $lambdaHome,
+        float $lambdaAway,
+        float $share = self::DEFAULT_FIRST_HALF_SHARE,
+        int $maxGoals = self::MAX_GOALS,
+    ): array {
+        $share = min(0.9, max(0.1, $share));
+
+        return self::scoreMatrix($lambdaHome * $share, $lambdaAway * $share, 0.0, $maxGoals);
+    }
+
+    /**
+     * Half-time market probabilities derived from a first-half score matrix.
+     *
+     * @param  array<int, array<int, float>>  $matrix
+     * @return array{home_lead: float, level: float, away_lead: float, over_0_5: float}
+     */
+    public static function halfTimeProbabilities(array $matrix): array
+    {
+        $homeLead = 0.0;
+        $level = 0.0;
+        $awayLead = 0.0;
+
+        foreach ($matrix as $h => $row) {
+            foreach ($row as $a => $probability) {
+                if ($h > $a) {
+                    $homeLead += $probability;
+                } elseif ($h === $a) {
+                    $level += $probability;
+                } else {
+                    $awayLead += $probability;
+                }
+            }
+        }
+
+        return [
+            'home_lead' => $homeLead,
+            'level' => $level,
+            'away_lead' => $awayLead,
+            // Any goal at all is the complement of the goalless cell.
+            'over_0_5' => max(0.0, 1.0 - ($matrix[0][0] ?? 0.0)),
         ];
     }
 

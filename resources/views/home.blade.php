@@ -124,13 +124,19 @@
                             <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">{{ $match->kickoff_at->format('H:i') }}</span>
                         </div>
 
-                        <div class="flex items-center justify-between py-2">
-                            <div class="font-bold text-base text-white group-hover:text-[#38BDF8] transition-colors">
-                                {{ $match->home_team }}
+                        <div class="flex items-center justify-between py-2 gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <x-team-crest :team="$match->homeClub" :name="$match->home_team" size="sm" />
+                                <div class="font-bold text-base text-white group-hover:text-[#38BDF8] transition-colors truncate">
+                                    {{ $match->home_team }}
+                                </div>
                             </div>
-                            <div class="text-xs font-mono text-slate-500 px-2">VS</div>
-                            <div class="font-bold text-base text-white group-hover:text-[#38BDF8] transition-colors">
-                                {{ $match->away_team }}
+                            <div class="text-xs font-mono text-slate-500 px-1 shrink-0">VS</div>
+                            <div class="flex items-center gap-2 min-w-0 justify-end">
+                                <div class="font-bold text-base text-white group-hover:text-[#38BDF8] transition-colors truncate">
+                                    {{ $match->away_team }}
+                                </div>
+                                <x-team-crest :team="$match->awayClub" :name="$match->away_team" size="sm" />
                             </div>
                         </div>
 
@@ -220,4 +226,36 @@
             </div>
         </div>
     </section>
+
+    {{-- Newsroom strip. Only rendered when something is published, so an empty
+         blog does not leave a dead section on the front page. --}}
+    @if($latestPosts->isNotEmpty())
+        <section class="space-y-4 mt-10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-extrabold text-white">Latest News</h2>
+                    <p class="text-xs text-slate-400">Analysis, fixture context and platform announcements.</p>
+                </div>
+                <a href="{{ route('blog.index') }}" class="text-xs font-semibold text-[#38BDF8] hover:underline">All News &rarr;</a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @foreach($latestPosts as $post)
+                    <a href="{{ route('blog.show', $post) }}" class="p-5 rounded-2xl glass-panel border border-slate-800/80 hover:border-sky-500/50 transition-all group">
+                        <div class="flex items-center gap-2 mb-2">
+                            @if($post->isAiWritten())
+                                <span class="px-2 py-0.5 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-[10px] font-bold">AI</span>
+                            @else
+                                <span class="px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/30 text-[10px] font-bold">EDITORIAL</span>
+                            @endif
+                            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{{ $post->categoryLabel() }}</span>
+                        </div>
+                        <div class="font-bold text-sm text-white group-hover:text-[#38BDF8] transition-colors leading-snug">{{ $post->title }}</div>
+                        <p class="text-xs text-slate-400 mt-2 line-clamp-2">{{ $post->summary(120) }}</p>
+                        <div class="text-[10px] text-slate-500 mt-3">{{ $post->published_at?->format('d M Y') }}</div>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
 @endsection

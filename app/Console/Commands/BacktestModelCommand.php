@@ -5,7 +5,9 @@ namespace App\Console\Commands;
 use App\Models\GameMatch;
 use App\Models\Result;
 use App\Services\StatisticalPredictionService;
+use App\Support\Market;
 use App\Support\MarketOutcome;
+use App\Support\MarketRegistry;
 use Illuminate\Console\Command;
 
 /**
@@ -84,16 +86,26 @@ class BacktestModelCommand extends Command
                 $predictions = $model->generate($match);
                 $actual = MarketOutcome::actual($result->home_score, $result->away_score);
 
-                foreach (MarketOutcome::MARKETS as $market) {
-                    if (! isset($predictions[$market])) {
+                foreach ($this->markets() as $market) {
+                    if (! isset($predictions[$market]) || ! array_key_exists($market, $actual)) {
                         continue;
                     }
 
                     $pick = $predictions[$market]['pick'];
                     $probability = (float) $predictions[$market]['probability'];
-                    $won = MarketOutcome::normalise($market, $pick) === $actual[$market];
 
-                    $this->tally($stats[$market], $probability, $won, $actual[$market]);
+                    // Via isWinningPick, not a direct comparison: on a market
+                    // that excludes the draw, an unparseable pick and a drawn
+                    // match both normalise to null, and comparing them would
+                    // score the pick as a win.
+                    $won = MarketOutcome::isWinningPick(
+                        $market,
+                        $pick,
+                        $result->home_score,
+                        $result->away_score,
+                    );
+
+                    $this->tally($stats[$market], $probability, $won, $actual[$market] ?? 'No Winner');
                 }
 
                 $graded++;
@@ -119,7 +131,7 @@ class BacktestModelCommand extends Command
             $this->warn("Fewer than {$minimum} fixtures: the figures below are noise, not evidence. Treat as a smoke test only.");
         }
 
-        foreach (MarketOutcome::MARKETS as $market) {
+        foreach ($this->markets() as $market) {
             $this->reportMarket($market, $stats[$market]);
         }
 
@@ -143,7 +155,7 @@ class BacktestModelCommand extends Command
     /**
      * @param  array<string, mixed>  $bucket
      */
-    protected function tally(array &$bucket, float $probability, bool $won, string $actualOutcome): void
+    protected function tally(array &$bucket, float $probability, bool $won, ?string $actualOutcome): void
     {
         $probability = min(max($probability, 0.0), 1.0);
 
@@ -267,6 +279,23 @@ class BacktestModelCommand extends Command
             'bins' => array_fill(0, $bins, ['n' => 0, 'wins' => 0, 'probability_sum' => 0.0]),
         ];
 
-        return array_fill_keys(MarketOutcome::MARKETS, $bucket);
+        return array_fill_keys($this->markets(), $bucket);
+    }
+
+    /**
+     * Markets this backtest can score.
+     *
+     * A finished fixture supplies a full-time score and nothing else, so the
+     * half-time and count markets are out of reach here until their result data
+     * is ingested — including them would report every one of them as a loss.
+     *
+     * @return array<int, string>
+     */
+    protected function markets(): array
+    {
+        return array_keys(array_filter(
+            MarketRegistry::generated(),
+            fn (Market $market) => $market->family === Market::FAMILY_FT_SCORE,
+        ));
     }
 }

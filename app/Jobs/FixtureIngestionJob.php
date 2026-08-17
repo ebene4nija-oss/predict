@@ -14,7 +14,13 @@ class FixtureIngestionJob implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public int $days = 7) {}
+    /**
+     * @param  int|null  $days  How far ahead to ingest. Null defers to the
+     *                          admin-configured preview lead time, which is
+     *                          what the scheduled run wants; an explicit value
+     *                          is for one-off backfills.
+     */
+    public function __construct(public ?int $days = null) {}
 
     public function handle(
         FixtureProvider $provider,
@@ -29,15 +35,17 @@ class FixtureIngestionJob implements ShouldQueue
             return;
         }
 
-        $fixtures = $provider->upcomingFixtures($this->days);
+        $days = $this->days ?? GameMatch::previewLeadDays();
+        $fixtures = $provider->upcomingFixtures($days);
         $ingested = 0;
+        $previewed = 0;
 
         foreach ($fixtures as $fixture) {
             // Keyed on the provider's fixture id, so the two league meetings
             // of a season stay distinct rather than overwriting each other.
             $match = GameMatch::updateOrCreate(
                 ['external_id' => $fixture->externalId],
-                $fixture->toAttributes($provider->name()),
+                $fixture->toAttributes($provider->name()) + $fixture->syncTeams($provider->name()),
             );
 
             // Never re-predict or re-write the preview for a started fixture.
@@ -46,14 +54,25 @@ class FixtureIngestionJob implements ShouldQueue
             }
 
             $predictionService->calculateAndStore($match);
-            $previewService->generatePreview($match);
+
+            // Written once, refreshed once near kickoff, and retried only when
+            // the last attempt fell back to boilerplate. This used to run on
+            // every fixture on every nightly pass, so a fixture a week out was
+            // rewritten seven times before anyone read it.
+            if ($match->needsPreview()) {
+                $previewService->generatePreview($match);
+                $previewed++;
+            }
+
             $ingested++;
         }
 
         Log::info('Fixture ingestion complete', [
             'provider' => $provider->name(),
+            'lead_days' => $days,
             'fetched' => count($fixtures),
             'processed' => $ingested,
+            'previews_written' => $previewed,
         ]);
     }
 }

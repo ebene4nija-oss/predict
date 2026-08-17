@@ -14,16 +14,16 @@
             </div>
 
             <!-- Segmented Control for Market Filter -->
-            <div class="p-1 rounded-2xl glass-panel flex items-center space-x-1">
-                <a href="{{ route('top.picks', ['market' => 'win_draw_loss']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $market === 'win_draw_loss' ? 'bg-[#38BDF8] text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}">
-                    Top 10 Win
-                </a>
-                <a href="{{ route('top.picks', ['market' => 'gg']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $market === 'gg' ? 'bg-[#38BDF8] text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}">
-                    Top 10 GG
-                </a>
-                <a href="{{ route('top.picks', ['market' => 'over_2_5']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $market === 'over_2_5' ? 'bg-[#38BDF8] text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}">
-                    Top 10 Over 2.5
-                </a>
+            <div class="p-1 rounded-2xl glass-panel flex flex-wrap items-center gap-1">
+                @foreach($markets as $key => $definition)
+                    <a href="{{ route('top.picks', ['market' => $key]) }}"
+                       class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $market === $key ? 'bg-[#38BDF8] text-slate-950 shadow-md' : ($definition->generated ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-400') }}">
+                        {{ $definition->listLabel }}
+                        @unless($definition->generated)
+                            <span class="ml-1 text-[9px] uppercase tracking-wide text-amber-500/80">soon</span>
+                        @endunless
+                    </a>
+                @endforeach
             </div>
         </div>
 
@@ -57,10 +57,25 @@
                 <span class="text-xs font-normal text-slate-400">({{ $top10Picks->count() }} picks)</span>
             </h2>
 
+            @unless($definition?->generated)
+                <div class="p-6 rounded-2xl glass-panel border border-amber-500/20 flex items-start space-x-4">
+                    <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                    <div>
+                        <div class="text-sm font-bold text-white">{{ $definition?->listLabel }} is not live yet</div>
+                        <p class="text-xs text-slate-400 mt-1">
+                            {{ $definition?->pendingNote }}
+                            We publish a market only once we can also settle it — a list we cannot grade has no track record behind it.
+                        </p>
+                    </div>
+                </div>
+            @endunless
+
             <div class="space-y-3">
                 @foreach($top10Picks as $index => $pick)
                     @php
-                        $isUnlocked = $isSubscriber || ($index < 2);
+                        $isUnlocked = $isSubscriber || ($index < $freePicks);
                     @endphp
 
                     @if($isUnlocked)
@@ -120,7 +135,7 @@
                                     </span>
                                     <div>
                                         <div class="text-xs font-bold text-white">Pick #{{ $index + 1 }} Gated for Pro Subscribers</div>
-                                        <div class="text-[11px] text-slate-400">Subscribe now to unlock all 10 ranked picks & expert analysis.</div>
+                                        <div class="text-[11px] text-slate-400">Free members see the top {{ $freePicks }}. Subscribe to unlock all 10 ranked picks & expert analysis.</div>
                                     </div>
                                 </div>
                                 <a href="{{ route('subscription.pricing') }}" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white shadow-lg shadow-sky-500/20 transition-all whitespace-nowrap">

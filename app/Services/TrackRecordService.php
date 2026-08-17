@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Result;
 use App\Support\MarketOutcome;
+use App\Support\MarketRegistry;
 use Illuminate\Support\Facades\Cache;
 
 class TrackRecordService
@@ -53,6 +54,7 @@ class TrackRecordService
 
                     $home = $result->home_score;
                     $away = $result->away_score;
+                    $context = $result->gradingContext();
 
                     foreach ($match->predictions as $prediction) {
                         // Only picks locked before kickoff count. A prediction
@@ -69,7 +71,14 @@ class TrackRecordService
                             continue;
                         }
 
-                        $won = MarketOutcome::isWinningPick($prediction->market, $prediction->pick, $home, $away);
+                        // Nor can a market whose settle data has not arrived —
+                        // a corners pick against a result carrying no corner
+                        // count is unverifiable, not lost.
+                        if (! MarketOutcome::isDeterminable($prediction->market, $context)) {
+                            continue;
+                        }
+
+                        $won = MarketOutcome::isWinningPick($prediction->market, $prediction->pick, $home, $away, $context);
 
                         $this->tally($aiStats, $prediction->market, $won, $prediction->profitUnits($won));
                         $this->tallyCalibration($calibration, (float) $prediction->probability, $won);
@@ -82,7 +91,11 @@ class TrackRecordService
                             continue;
                         }
 
-                        $won = MarketOutcome::isWinningPick($pick->market, $pick->pick, $home, $away);
+                        if (! MarketOutcome::isDeterminable($pick->market, $context)) {
+                            continue;
+                        }
+
+                        $won = MarketOutcome::isWinningPick($pick->market, $pick->pick, $home, $away, $context);
 
                         $this->tally($expertStats, $pick->market, $won, null);
                     }
@@ -157,7 +170,9 @@ class TrackRecordService
     {
         $stats = [];
 
-        foreach ([...MarketOutcome::MARKETS, 'overall'] as $key) {
+        // Every registered market, not just the generated ones: markets retired
+        // from the engine keep their historical record on the public page.
+        foreach ([...MarketRegistry::keys(), 'overall'] as $key) {
             $stats[$key] = [
                 'total' => 0,
                 'won' => 0,

@@ -3,32 +3,55 @@
 namespace App\Support;
 
 /**
- * Single source of truth for grading a pick against a final score.
+ * Single source of truth for grading a pick against a result.
  *
  * Grading logic used to live in three places that disagreed with each other:
  * the track record scored a "both teams to score" pick as "GG (Yes)" while the
  * expert leaderboard scored the same pick as "Yes", so the same pick could be
  * a win on one page and a loss on another. Everything now normalises through
  * here, which also tolerates the free-text picks experts submit.
+ *
+ * Three states matter and are easy to conflate:
+ *
+ *  - the market is absent from actual() — the data needed to settle it has not
+ *    arrived, so the pick is unverifiable and must not be counted either way;
+ *  - the market maps to null — the result is known and no selection won (a
+ *    draw on a win-only market), so every pick in it loses;
+ *  - the market maps to a label — the pick wins if it normalises to that label.
  */
 class MarketOutcome
 {
-    public const MARKETS = ['win_draw_loss', 'gg', 'over_2_5'];
+    /**
+     * The outcome of a match, keyed by market, in canonical form.
+     *
+     * Markets whose grading data is missing are omitted rather than guessed.
+     *
+     * @param  array<string, mixed>  $context  Extra settle data: ht_home, ht_away, corners, cards.
+     * @return array<string, string|null>
+     */
+    public static function actual(int $homeScore, int $awayScore, array $context = []): array
+    {
+        $outcomes = [];
+
+        foreach (MarketRegistry::all() as $key => $market) {
+            if (! $market->isDeterminable($context)) {
+                continue;
+            }
+
+            $outcomes[$key] = self::resolve($market, $homeScore, $awayScore, $context);
+        }
+
+        return $outcomes;
+    }
 
     /**
-     * The actual outcome of a match, keyed by market, in canonical form.
+     * Whether this result carries the data needed to settle this market.
      *
-     * @return array{win_draw_loss: string, gg: string, over_2_5: string}
+     * @param  array<string, mixed>  $context
      */
-    public static function actual(int $homeScore, int $awayScore): array
+    public static function isDeterminable(string $market, array $context = []): bool
     {
-        return [
-            'win_draw_loss' => $homeScore > $awayScore
-                ? 'Home Win'
-                : ($homeScore === $awayScore ? 'Draw' : 'Away Win'),
-            'gg' => ($homeScore > 0 && $awayScore > 0) ? 'GG (Yes)' : 'NG (No)',
-            'over_2_5' => ($homeScore + $awayScore) > 2.5 ? 'Over 2.5' : 'Under 2.5',
-        ];
+        return (bool) MarketRegistry::find($market)?->isDeterminable($context);
     }
 
     /**
@@ -44,17 +67,28 @@ class MarketOutcome
     }
 
     /**
-     * Did this pick win, given the final score?
+     * Did this pick win, given the result?
+     *
+     * @param  array<string, mixed>  $context
      */
-    public static function isWinningPick(string $market, ?string $pick, int $homeScore, int $awayScore): bool
-    {
+    public static function isWinningPick(
+        string $market,
+        ?string $pick,
+        int $homeScore,
+        int $awayScore,
+        array $context = [],
+    ): bool {
         $normalised = static::normalise($market, $pick);
 
         if ($normalised === null) {
             return false;
         }
 
-        return $normalised === (static::actual($homeScore, $awayScore)[$market] ?? null);
+        $actual = static::actual($homeScore, $awayScore, $context);
+
+        // Absent means unsettleable and null means nothing won; neither is a
+        // win, and callers separate the two via isDeterminable().
+        return isset($actual[$market]) && $normalised === $actual[$market];
     }
 
     /**
@@ -68,29 +102,64 @@ class MarketOutcome
             return null;
         }
 
-        $aliases = match ($market) {
-            'win_draw_loss' => [
-                'Home Win' => ['home win', 'home', '1', 'h'],
-                'Away Win' => ['away win', 'away', '2', 'a'],
-                'Draw' => ['draw', 'x', 'tie'],
-            ],
-            'gg' => [
-                'GG (Yes)' => ['gg (yes)', 'gg', 'yes', 'btts', 'btts yes', 'both teams to score'],
-                'NG (No)' => ['ng (no)', 'ng', 'no', 'btts no'],
-            ],
-            'over_2_5' => [
-                'Over 2.5' => ['over 2.5', 'over', 'o2.5', 'over 2,5'],
-                'Under 2.5' => ['under 2.5', 'under', 'u2.5', 'under 2,5'],
-            ],
-            default => [],
-        };
-
-        foreach ($aliases as $canonical => $accepted) {
+        foreach (MarketRegistry::find($market)?->outcomes ?? [] as $canonical => $accepted) {
             if (in_array($value, $accepted, true)) {
                 return $canonical;
             }
         }
 
         return null;
+    }
+
+    /**
+     * The canonical outcome of one market.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    protected static function resolve(Market $market, int $homeScore, int $awayScore, array $context): ?string
+    {
+        // Two-outcome markets list the affirmative selection first, so the
+        // labels come from the registry rather than being restated here.
+        $selections = $market->selections();
+        $first = $selections[0] ?? null;
+        $second = $selections[1] ?? null;
+
+        return match ($market->family) {
+            Market::FAMILY_FT_SCORE => match ($market->key) {
+                'win_draw_loss' => $homeScore > $awayScore
+                    ? 'Home Win'
+                    : ($homeScore === $awayScore ? 'Draw' : 'Away Win'),
+                // A draw settles the market without settling any selection.
+                'win' => $homeScore > $awayScore ? $first : ($homeScore < $awayScore ? $second : null),
+                'gg' => ($homeScore > 0 && $awayScore > 0) ? $first : $second,
+                default => $market->line === null
+                    ? null
+                    : (($homeScore + $awayScore) > $market->line ? $first : $second),
+            },
+
+            Market::FAMILY_HT_SCORE => self::resolveHalfTime($market, $context, $first, $second),
+
+            Market::FAMILY_COUNT => $market->line === null || $market->requires === []
+                ? null
+                : (((float) $context[$market->requires[0]]) > $market->line ? $first : $second),
+
+            default => null,
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    protected static function resolveHalfTime(Market $market, array $context, ?string $first, ?string $second): ?string
+    {
+        $home = (int) $context['ht_home'];
+        $away = (int) $context['ht_away'];
+
+        if ($market->line !== null) {
+            return ($home + $away) > $market->line ? $first : $second;
+        }
+
+        // Level at the break settles the market with no winning selection.
+        return $home > $away ? $first : ($home < $away ? $second : null);
     }
 }

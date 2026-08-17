@@ -6,7 +6,9 @@ use App\Models\ExpertPick;
 use App\Models\GameMatch;
 use App\Models\Expert;
 use App\Support\MarketOutcome;
+use App\Support\MarketRegistry;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ExpertController extends Controller
 {
@@ -49,7 +51,9 @@ class ExpertController extends Controller
 
         $validated = $request->validate([
             'match_id' => 'required|exists:matches,id',
-            'market' => 'required|in:win_draw_loss,gg,over_2_5',
+            // Only markets the platform actually settles — a pick in a market
+            // with no result data could never be graded.
+            'market' => ['required', Rule::in(MarketRegistry::generatedKeys())],
             'pick' => 'required|string|max:255',
             'rationale' => 'nullable|string|max:1000',
             'confidence' => 'required|numeric|min:0.5|max:0.99',
@@ -84,6 +88,10 @@ class ExpertController extends Controller
                     fn ($p) => $p->match
                         && $p->match->result
                         && MarketOutcome::isGradeable($p->market, $p->pick)
+                        // Markets whose settle data has not arrived are left
+                        // out of the denominator as well, so the leaderboard
+                        // agrees with the track record.
+                        && MarketOutcome::isDeterminable($p->market, $p->match->result->gradingContext())
                 );
 
                 $wonCount = $settledPicks->filter(fn ($p) => MarketOutcome::isWinningPick(
@@ -91,6 +99,7 @@ class ExpertController extends Controller
                     $p->pick,
                     $p->match->result->home_score,
                     $p->match->result->away_score,
+                    $p->match->result->gradingContext(),
                 ))->count();
 
                 $settledCount = $settledPicks->count();

@@ -5,15 +5,7 @@
 @section('content')
     <div class="max-w-6xl mx-auto space-y-6 py-4">
         <!-- Admin Navigation Bar -->
-        <div class="flex items-center space-x-1 p-1 rounded-2xl glass-panel mb-6 overflow-x-auto">
-            <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Dashboard</a>
-            <a href="{{ route('admin.matches.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.matches.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Matches</a>
-            <a href="{{ route('admin.predictions.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.predictions.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Predictions</a>
-            <a href="{{ route('admin.users.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.users.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Users</a>
-            <a href="{{ route('admin.experts.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.experts.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Experts</a>
-            <a href="{{ route('admin.ads.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.ads.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Ads</a>
-            <a href="{{ route('admin.settings') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.settings*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Settings</a>
-        </div>
+        @include('admin.partials.nav')
 
         <!-- Flash Message Banner -->
         @if(session('success'))
@@ -31,16 +23,16 @@
             </div>
 
             <!-- Market Filter Tabs -->
-            <div class="p-1 rounded-2xl glass-panel border border-slate-800 flex items-center space-x-1">
-                <a href="{{ route('admin.predictions.index', ['market' => 'win_draw_loss']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $market === 'win_draw_loss' ? 'bg-sky-500 text-slate-950 font-black shadow-md shadow-sky-500/20' : 'text-slate-400 hover:text-white' }}">
-                    1X2 Match Winner
-                </a>
-                <a href="{{ route('admin.predictions.index', ['market' => 'gg']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $market === 'gg' ? 'bg-sky-500 text-slate-950 font-black shadow-md shadow-sky-500/20' : 'text-slate-400 hover:text-white' }}">
-                    Both Teams to Score (GG)
-                </a>
-                <a href="{{ route('admin.predictions.index', ['market' => 'over_2_5']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $market === 'over_2_5' ? 'bg-sky-500 text-slate-950 font-black shadow-md shadow-sky-500/20' : 'text-slate-400 hover:text-white' }}">
-                    Over 2.5 Goals
-                </a>
+            <div class="p-1 rounded-2xl glass-panel border border-slate-800 flex flex-wrap items-center gap-1">
+                @foreach($markets as $key => $definition)
+                    <a href="{{ route('admin.predictions.index', ['market' => $key]) }}"
+                       class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $market === $key ? 'bg-sky-500 text-slate-950 font-black shadow-md shadow-sky-500/20' : ($definition->generated ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-400') }}">
+                        {{ $definition->label }}
+                        @unless($definition->generated)
+                            <span class="ml-1 text-[9px] uppercase tracking-wide text-amber-500/80">soon</span>
+                        @endunless
+                    </a>
+                @endforeach
             </div>
         </div>
 

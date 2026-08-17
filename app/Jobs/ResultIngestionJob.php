@@ -6,7 +6,6 @@ use App\Contracts\FixtureProvider;
 use App\Models\GameMatch;
 use App\Models\Result;
 use App\Services\TrackRecordService;
-use App\Support\MarketOutcome;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -38,12 +37,23 @@ class ResultIngestionJob implements ShouldQueue
                 continue;
             }
 
+            // Only a coherent half-time score is stored; an impossible one
+            // (a side scoring fewer by full time) would settle the first-half
+            // markets against a scoreline that never happened.
+            $context = $result->hasHalfTime()
+                ? ['ht_home' => $result->htHomeScore, 'ht_away' => $result->htAwayScore]
+                : [];
+
             Result::updateOrCreate(
                 ['match_id' => $match->id],
                 [
                     'home_score' => $result->homeScore,
                     'away_score' => $result->awayScore,
-                    'actual_outcome' => MarketOutcome::actual($result->homeScore, $result->awayScore),
+                    'ht_home_score' => $context['ht_home'] ?? null,
+                    'ht_away_score' => $context['ht_away'] ?? null,
+                    // actual_outcome is derived on save (see Result::booted),
+                    // so a re-run here cannot wipe corner and card outcomes
+                    // added by the later stats pass.
                     'settled_at' => $result->finishedAt ?? now(),
                 ]
             );

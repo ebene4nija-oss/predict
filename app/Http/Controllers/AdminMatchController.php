@@ -7,7 +7,6 @@ use App\Models\Result;
 use App\Services\PredictionService;
 use App\Services\PreviewGenerationService;
 use App\Services\TrackRecordService;
-use App\Support\MarketOutcome;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -111,17 +110,33 @@ class AdminMatchController extends Controller
         $validated = $request->validate([
             'home_score' => 'required|integer|min:0|max:99',
             'away_score' => 'required|integer|min:0|max:99',
+            // Optional: a fixture may be settled without one. Capped at the
+            // full-time score because a side cannot un-score after the break,
+            // and a typo here would grade the first-half markets wrongly.
+            'ht_home_score' => 'nullable|integer|min:0|lte:home_score',
+            'ht_away_score' => 'nullable|integer|min:0|lte:away_score',
+        ], [
+            'ht_home_score.lte' => 'The half-time home score cannot exceed the full-time home score.',
+            'ht_away_score.lte' => 'The half-time away score cannot exceed the full-time away score.',
         ]);
 
         $h = (int) $validated['home_score'];
         $a = (int) $validated['away_score'];
+
+        // Both halves of the half-time score or neither: one alone settles
+        // nothing and would leave the markets half-graded.
+        $htHome = $validated['ht_home_score'] ?? null;
+        $htAway = $validated['ht_away_score'] ?? null;
+        $hasHalfTime = $htHome !== null && $htAway !== null;
 
         Result::updateOrCreate(
             ['match_id' => $match->id],
             [
                 'home_score' => $h,
                 'away_score' => $a,
-                'actual_outcome' => MarketOutcome::actual($h, $a),
+                'ht_home_score' => $hasHalfTime ? (int) $htHome : null,
+                'ht_away_score' => $hasHalfTime ? (int) $htAway : null,
+                // actual_outcome is derived on save; see Result::booted().
                 'settled_at' => now(),
             ]
         );

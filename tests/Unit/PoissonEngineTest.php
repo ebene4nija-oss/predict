@@ -22,6 +22,49 @@ class PoissonEngineTest extends TestCase
         $this->assertEqualsWithDelta(1.0, $total, 1e-9, 'score probabilities must sum to 1');
     }
 
+    public function test_first_half_probabilities_are_coherent_and_quieter_than_the_match(): void
+    {
+        $lambdaHome = 1.6;
+        $lambdaAway = 1.2;
+
+        $half = PoissonEngine::halfTimeProbabilities(
+            PoissonEngine::firstHalfMatrix($lambdaHome, $lambdaAway)
+        );
+
+        $this->assertEqualsWithDelta(
+            1.0,
+            $half['home_lead'] + $half['level'] + $half['away_lead'],
+            1e-9,
+            'leading, level and trailing at the break must partition the space'
+        );
+
+        $fullTime = PoissonEngine::marketProbabilities(
+            PoissonEngine::scoreMatrix($lambdaHome, $lambdaAway)
+        );
+
+        // Only 45% of the expected goals fall before the break, so a first-half
+        // goal must be less likely than a full-match one. A 50/50 split — or
+        // reusing the full-time lambdas — would break this.
+        $anyGoalAllMatch = 1.0 - (PoissonEngine::scoreMatrix($lambdaHome, $lambdaAway)[0][0]);
+        $this->assertLessThan($anyGoalAllMatch, $half['over_0_5']);
+
+        // And the side favoured over the match must be favoured at the break.
+        $this->assertGreaterThan($half['away_lead'], $half['home_lead']);
+        $this->assertGreaterThan($fullTime['away_win'], $fullTime['home_win']);
+
+        // A level half-time is common; the stronger side leading is not a lock.
+        $this->assertGreaterThan(0.0, $half['level']);
+        $this->assertLessThan(1.0, $half['home_lead']);
+    }
+
+    public function test_a_larger_first_half_share_raises_first_half_goal_probability(): void
+    {
+        $quiet = PoissonEngine::halfTimeProbabilities(PoissonEngine::firstHalfMatrix(1.5, 1.2, 0.35));
+        $busy = PoissonEngine::halfTimeProbabilities(PoissonEngine::firstHalfMatrix(1.5, 1.2, 0.55));
+
+        $this->assertGreaterThan($quiet['over_0_5'], $busy['over_0_5']);
+    }
+
     public function test_market_probabilities_are_coherent(): void
     {
         $markets = PoissonEngine::marketProbabilities(PoissonEngine::scoreMatrix(1.6, 1.2));

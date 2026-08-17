@@ -5,15 +5,7 @@
 @section('content')
 <div class="max-w-3xl mx-auto space-y-6">
     <!-- Admin Navigation Bar -->
-    <div class="flex items-center space-x-1 p-1 rounded-2xl glass-panel mb-6 overflow-x-auto">
-        <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Dashboard</a>
-        <a href="{{ route('admin.matches.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.matches.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Matches</a>
-        <a href="{{ route('admin.predictions.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.predictions.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Predictions</a>
-        <a href="{{ route('admin.users.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.users.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Users</a>
-        <a href="{{ route('admin.experts.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.experts.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Experts</a>
-        <a href="{{ route('admin.ads.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.ads.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Ads</a>
-        <a href="{{ route('admin.settings') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.settings*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Settings</a>
-    </div>
+    @include('admin.partials.nav')
 
     <!-- Top Action Bar & Title -->
     <div class="flex items-center justify-between">
@@ -84,6 +76,43 @@
                     @error('away_score')
                         <p class="text-xs text-rose-400 mt-1">{{ $message }}</p>
                     @enderror
+                </div>
+            </div>
+
+            <!-- Half-Time Score — settles the first-half markets -->
+            <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-200">Half-Time Score <span class="text-xs font-normal text-slate-500">(optional)</span></h3>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Settles <strong>Top 10 1H Over 0.5</strong> and <strong>Top 10 HT Win</strong>. Leave both blank
+                        and those two markets stay unsettled for this fixture — they are not counted as losses.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="text-center space-y-2">
+                        <label for="ht_home_score" class="block text-xs font-bold text-slate-300">
+                            {{ $match->home_team }} at HT
+                        </label>
+                        <input type="number" name="ht_home_score" id="ht_home_score" min="0"
+                            value="{{ old('ht_home_score', $match->result->ht_home_score ?? '') }}"
+                            class="w-24 text-center bg-slate-900 border border-slate-700 text-white font-mono text-xl font-black rounded-xl py-2 focus:border-sky-400 focus:ring-1 focus:ring-sky-400 focus:outline-none" />
+                        @error('ht_home_score')
+                            <p class="text-xs text-rose-400 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="text-center space-y-2">
+                        <label for="ht_away_score" class="block text-xs font-bold text-slate-300">
+                            {{ $match->away_team }} at HT
+                        </label>
+                        <input type="number" name="ht_away_score" id="ht_away_score" min="0"
+                            value="{{ old('ht_away_score', $match->result->ht_away_score ?? '') }}"
+                            class="w-24 text-center bg-slate-900 border border-slate-700 text-white font-mono text-xl font-black rounded-xl py-2 focus:border-sky-400 focus:ring-1 focus:ring-sky-400 focus:outline-none" />
+                        @error('ht_away_score')
+                            <p class="text-xs text-rose-400 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
 

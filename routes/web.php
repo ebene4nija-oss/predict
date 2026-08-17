@@ -7,6 +7,7 @@ use App\Http\Controllers\ExpertController;
 use App\Http\Controllers\TrackRecordController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\LegalController;
@@ -22,6 +23,10 @@ Route::get('/subscribe', [SubscriptionController::class, 'pricing'])->name('subs
 Route::get('/top-picks', [PredictionController::class, 'topPicks'])->name('top.picks');
 Route::get('/expert-picks', [ExpertController::class, 'index'])->name('expert.picks');
 Route::get('/expert-leaderboard', [ExpertController::class, 'leaderboard'])->name('expert.leaderboard');
+
+// News & announcements
+Route::get('/news', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/news/{post}', [BlogController::class, 'show'])->name('blog.show');
 
 // Legal. Both payment gateways require these to be publicly reachable before a
 // live merchant account is approved.
@@ -90,6 +95,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
     Route::post('/pipeline/run', [AdminController::class, 'runPipeline'])->name('admin.pipeline.run');
 
+    // System maintenance, for hosts with no shell access
+    Route::get('/system', [\App\Http\Controllers\AdminSystemController::class, 'index'])->name('admin.system');
+    Route::post('/system/command', [\App\Http\Controllers\AdminSystemController::class, 'runCommand'])->name('admin.system.command');
+    Route::post('/system/mail-test', [\App\Http\Controllers\AdminSystemController::class, 'testMail'])->name('admin.system.mail-test');
+    Route::post('/system/integration-test', [\App\Http\Controllers\AdminSystemController::class, 'testIntegration'])->name('admin.system.integration-test');
+
     // Match & Fixture Manager
     Route::get('/matches', [\App\Http\Controllers\AdminMatchController::class, 'index'])->name('admin.matches.index');
     Route::get('/matches/create', [\App\Http\Controllers\AdminMatchController::class, 'create'])->name('admin.matches.create');
@@ -117,6 +128,30 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/experts/{expert}', [\App\Http\Controllers\AdminExpertController::class, 'destroyExpert'])->name('admin.experts.destroy');
     Route::post('/experts/picks', [\App\Http\Controllers\AdminExpertController::class, 'storePick'])->name('admin.experts.picks.store');
     Route::delete('/experts/picks/{pick}', [\App\Http\Controllers\AdminExpertController::class, 'destroyPick'])->name('admin.experts.picks.destroy');
+
+    // News, Announcements & AI Newsroom
+    Route::get('/posts', [\App\Http\Controllers\AdminPostController::class, 'index'])->name('admin.posts.index');
+    Route::get('/posts/create', [\App\Http\Controllers\AdminPostController::class, 'create'])->name('admin.posts.create');
+    Route::post('/posts', [\App\Http\Controllers\AdminPostController::class, 'store'])->name('admin.posts.store');
+    Route::post('/posts/generate', [\App\Http\Controllers\AdminPostController::class, 'generate'])->name('admin.posts.generate');
+    Route::get('/posts/{post}/edit', [\App\Http\Controllers\AdminPostController::class, 'edit'])->name('admin.posts.edit');
+    Route::put('/posts/{post}', [\App\Http\Controllers\AdminPostController::class, 'update'])->name('admin.posts.update');
+    Route::post('/posts/{post}/toggle', [\App\Http\Controllers\AdminPostController::class, 'togglePublish'])->name('admin.posts.toggle');
+    Route::delete('/posts/{post}', [\App\Http\Controllers\AdminPostController::class, 'destroy'])->name('admin.posts.destroy');
+
+    // RSS Newswire — feeds the AI newsroom writes in response to
+    Route::get('/news-sources', [\App\Http\Controllers\AdminNewsSourceController::class, 'index'])->name('admin.sources.index');
+    Route::post('/news-sources', [\App\Http\Controllers\AdminNewsSourceController::class, 'store'])->name('admin.sources.store');
+    Route::put('/news-sources/{source}', [\App\Http\Controllers\AdminNewsSourceController::class, 'update'])->name('admin.sources.update');
+    Route::delete('/news-sources/{source}', [\App\Http\Controllers\AdminNewsSourceController::class, 'destroy'])->name('admin.sources.destroy');
+    Route::post('/news-sources/{source}/preview', [\App\Http\Controllers\AdminNewsSourceController::class, 'preview'])->name('admin.sources.preview');
+    Route::post('/news-sources/{source}/poll', [\App\Http\Controllers\AdminNewsSourceController::class, 'poll'])->name('admin.sources.poll');
+    Route::post('/news-sources/poll-all', [\App\Http\Controllers\AdminNewsSourceController::class, 'poll'])->name('admin.sources.poll-all');
+
+    // Team Crest Library
+    Route::get('/teams', [\App\Http\Controllers\AdminTeamController::class, 'index'])->name('admin.teams.index');
+    Route::put('/teams/{team}', [\App\Http\Controllers\AdminTeamController::class, 'update'])->name('admin.teams.update');
+    Route::post('/teams/backfill', [\App\Http\Controllers\AdminTeamController::class, 'backfill'])->name('admin.teams.backfill');
 
     // Ad Banner & Sponsor Manager
     Route::get('/ads', [\App\Http\Controllers\AdminAdController::class, 'index'])->name('admin.ads.index');

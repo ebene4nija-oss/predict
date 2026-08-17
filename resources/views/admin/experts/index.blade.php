@@ -5,15 +5,7 @@
 @section('content')
     <div class="max-w-6xl mx-auto space-y-8 py-4">
         <!-- Admin Navigation Bar -->
-        <div class="flex items-center space-x-1 p-1 rounded-2xl glass-panel mb-6 overflow-x-auto">
-            <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Dashboard</a>
-            <a href="{{ route('admin.matches.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.matches.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Matches</a>
-            <a href="{{ route('admin.predictions.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.predictions.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Predictions</a>
-            <a href="{{ route('admin.users.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.users.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Users</a>
-            <a href="{{ route('admin.experts.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.experts.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Experts</a>
-            <a href="{{ route('admin.ads.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.ads.*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Ads</a>
-            <a href="{{ route('admin.settings') }}" class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.settings*') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white' }}">Settings</a>
-        </div>
+        @include('admin.partials.nav')
 
         <!-- Flash Message Banner -->
         @if(session('success'))
@@ -185,9 +177,9 @@
                     <div class="sm:col-span-4">
                         <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Market *</label>
                         <select name="market" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-indigo-400 focus:outline-none">
-                            <option value="win_draw_loss">Match Winner (1X2)</option>
-                            <option value="gg">Both Teams to Score (GG)</option>
-                            <option value="over_2_5">Over 2.5 Goals</option>
+                            @foreach(\App\Support\MarketRegistry::generated() as $key => $definition)
+                                <option value="{{ $key }}">{{ $definition->label }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -239,7 +231,7 @@
                                         {{ $pick->match->home_team ?? 'N/A' }} vs {{ $pick->match->away_team ?? 'N/A' }}
                                     </td>
                                     <td class="px-4 py-3 text-slate-400 uppercase font-mono text-[10px] whitespace-nowrap">
-                                        {{ $pick->market }}
+                                        {{ uppercase_mkt($pick->market) }}
                                     </td>
                                     <td class="px-4 py-3 font-extrabold text-sky-400 whitespace-nowrap">
                                         {{ $pick->pick }}

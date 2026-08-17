@@ -37,6 +37,8 @@ return [
 
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
+        // Bootstrap default only; the admin dashboard value wins once set.
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
     ],
 
     'claude' => [

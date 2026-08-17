@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\GameMatch;
 use App\Models\Setting;
+use App\Services\Stats\FootballDataCoUkClient;
+use App\Support\CountModel;
+use App\Support\MarketRegistry;
 use App\Support\PoissonEngine;
 
 /**
@@ -46,6 +49,15 @@ class StatisticalPredictionService
             PoissonEngine::scoreMatrix($lambdas['home'], $lambdas['away'])
         );
 
+        // The first half is modelled from the same expected goals rather than
+        // separately, so a fixture cannot be tipped over 2.5 for the match and
+        // under 0.5 for the half on inconsistent numbers.
+        $firstHalfShare = (float) Setting::get('first_half_share', PoissonEngine::DEFAULT_FIRST_HALF_SHARE);
+
+        $halfTime = PoissonEngine::halfTimeProbabilities(
+            PoissonEngine::firstHalfMatrix($lambdas['home'], $lambdas['away'], $firstHalfShare)
+        );
+
         $xg = round($lambdas['home'], 2).' - '.round($lambdas['away'], 2);
 
         // Each market reports the probability of the side actually tipped, so a
@@ -58,6 +70,12 @@ class StatisticalPredictionService
         arsort($wdl);
         $wdlPick = (string) array_key_first($wdl);
 
+        // The win market excludes the draw, so it is not a filter on the 1X2
+        // pick: a fixture whose likeliest single outcome is a draw can still
+        // carry a perfectly rankable 46% away win, and filtering would drop it.
+        $winPick = $probabilities['home_win'] >= $probabilities['away_win'] ? 'Home Win' : 'Away Win';
+        $winProbability = max($probabilities['home_win'], $probabilities['away_win']);
+
         $ggYes = $probabilities['gg'];
         $overYes = $probabilities['over_2_5'];
 
@@ -66,6 +84,12 @@ class StatisticalPredictionService
                 'pick' => $wdlPick,
                 'probability' => $wdl[$wdlPick],
                 'rationale' => "Expected goals {$xg} ({$match->league} baseline {$leagueAverage}).",
+            ],
+            'win' => [
+                'pick' => $winPick,
+                'probability' => $winProbability,
+                'rationale' => "Expected goals {$xg}; draw priced out at "
+                    .round($probabilities['draw'] * 100, 1).'%.',
             ],
             'gg' => [
                 'pick' => $ggYes >= 0.5 ? 'GG (Yes)' : 'NG (No)',
@@ -77,7 +101,79 @@ class StatisticalPredictionService
                 'probability' => $overYes >= 0.5 ? $overYes : 1.0 - $overYes,
                 'rationale' => 'Expected total goals '.round($lambdas['home'] + $lambdas['away'], 2).'.',
             ],
+            'fh_over_0_5' => [
+                'pick' => $halfTime['over_0_5'] >= 0.5 ? '1H Over 0.5' : '1H Under 0.5',
+                'probability' => max($halfTime['over_0_5'], 1.0 - $halfTime['over_0_5']),
+                'rationale' => 'First-half expected goals '
+                    .round(($lambdas['home'] + $lambdas['away']) * $firstHalfShare, 2)
+                    .'; goalless half at '.round((1.0 - $halfTime['over_0_5']) * 100, 1).'%.',
+            ],
+            'ht_win' => [
+                'pick' => $halfTime['home_lead'] >= $halfTime['away_lead'] ? 'HT Home Win' : 'HT Away Win',
+                'probability' => max($halfTime['home_lead'], $halfTime['away_lead']),
+                'rationale' => 'Level at the break modelled at '
+                    .round($halfTime['level'] * 100, 1).'%.',
+            ],
+            ...$this->countMarkets($match),
         ];
+    }
+
+    /**
+     * Corner and card markets, when both clubs carry rates.
+     *
+     * Returns nothing at all otherwise. A fixture with no rates is one we
+     * cannot price these markets for, and emitting a league-average pick would
+     * dress a coin flip up as analysis.
+     *
+     * @return array<string, array{pick: string, probability: float, rationale: string}>
+     */
+    protected function countMarkets(GameMatch $match): array
+    {
+        if (! $match->hasCountStats()) {
+            return [];
+        }
+
+        $home = $match->homeClub;
+        $away = $match->awayClub;
+        $baseline = FootballDataCoUkClient::baselineFor(
+            FootballDataCoUkClient::divisionFor($match->league)
+        );
+
+        $markets = [];
+
+        foreach ([
+            'corners_over_8_5' => ['corners', 'corners_for', 'corners_against', 'corners', 'corners_var'],
+            'cards_over_2_5' => ['cards', 'cards_for', 'cards_against', 'cards', 'cards_var'],
+        ] as $key => [$noun, $forField, $againstField, $meanKey, $varianceKey]) {
+            $market = MarketRegistry::find($key);
+
+            if ($market?->line === null) {
+                continue;
+            }
+
+            $expected = CountModel::expectedTotal(
+                $home->{$forField},
+                $away->{$againstField},
+                $away->{$forField},
+                $home->{$againstField},
+                $baseline[$meanKey],
+            );
+
+            // The league variance decides the distribution: overdispersed
+            // totals get a negative binomial, the rest stay Poisson.
+            $over = CountModel::overProbability($expected, $market->line, $baseline[$varianceKey]);
+
+            [$overLabel, $underLabel] = $market->selections();
+
+            $markets[$key] = [
+                'pick' => $over >= 0.5 ? $overLabel : $underLabel,
+                'probability' => max($over, 1.0 - $over),
+                'rationale' => 'Expected '.$noun.' '.round($expected, 1)
+                    .' (league average '.$baseline[$meanKey].').',
+            ];
+        }
+
+        return $markets;
     }
 
     protected function leagueAverage(?string $league): float

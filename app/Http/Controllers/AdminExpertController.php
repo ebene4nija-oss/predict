@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Expert;
 use App\Models\ExpertPick;
 use App\Models\GameMatch;
+use App\Support\MarketRegistry;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AdminExpertController extends Controller
 {
@@ -54,7 +56,7 @@ class AdminExpertController extends Controller
         $validated = $request->validate([
             'expert_id' => 'required|exists:experts,id',
             'match_id' => 'required|exists:matches,id',
-            'market' => 'required|in:win_draw_loss,gg,over_2_5',
+            'market' => ['required', Rule::in(MarketRegistry::generatedKeys())],
             'pick' => 'required|string',
             'rationale' => 'nullable|string',
             'confidence' => 'required|numeric|min:0.50|max:0.99',

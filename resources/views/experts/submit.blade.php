@@ -32,9 +32,9 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Target Market</label>
                         <select name="market" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:border-amber-400 focus:outline-none" required>
-                            <option value="win_draw_loss">Match Winner (W/D/L)</option>
-                            <option value="gg">Both Teams Score (GG)</option>
-                            <option value="over_2_5">Over 2.5 Goals</option>
+                            @foreach(\App\Support\MarketRegistry::generated() as $key => $definition)
+                                <option value="{{ $key }}">{{ $definition->label }} — {{ implode(' / ', $definition->selections()) }}</option>
+                            @endforeach
                         </select>
                     </div>
 

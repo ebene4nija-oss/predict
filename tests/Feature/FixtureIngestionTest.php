@@ -8,6 +8,7 @@ use App\Jobs\ResultIngestionJob;
 use App\Models\GameMatch;
 use App\Models\Setting;
 use App\Services\Fixtures\FootballDataProvider;
+use App\Support\MarketRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -90,8 +91,10 @@ class FixtureIngestionTest extends TestCase
         $run();
 
         $this->assertDatabaseCount('matches', 1);
-        // Three markets, not six.
-        $this->assertDatabaseCount('predictions', 3);
+        // One row per market this fixture supports, not two runs' worth. The
+        // clubs have no corner or card rates, so the count markets are absent —
+        // which is the gate working, not a missing prediction.
+        $this->assertDatabaseCount('predictions', count(MarketRegistry::generatedFor(false)));
     }
 
     public function test_team_form_is_derived_from_the_standings_table(): void

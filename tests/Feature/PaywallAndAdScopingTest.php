@@ -28,7 +28,7 @@ class PaywallAndAdScopingTest extends TestCase
 
             Prediction::create([
                 'match_id' => $match->id,
-                'market' => 'win_draw_loss',
+                'market' => 'win',
                 'pick' => 'Home Win',
                 'probability' => 0.90 - ($i * 0.05),
                 'is_top10' => true,
@@ -46,6 +46,28 @@ class PaywallAndAdScopingTest extends TestCase
         $response->assertSee('Sponsored Advertisement');
         $response->assertSee('Gated for Pro Subscribers');
         $response->assertSee('Unlock Now');
+    }
+
+    /**
+     * The free allowance is the product rule the whole paywall rests on, so it
+     * is asserted at the boundary rather than inferred from "something is
+     * locked": rank 3 open, rank 4 not.
+     */
+    public function test_a_free_user_sees_exactly_the_first_three_ranked_picks(): void
+    {
+        $freeUser = User::factory()->create(['role' => 'free']);
+
+        // The AI Top 5 hero is deliberately ungated, and would otherwise put
+        // every seeded fixture on the page regardless of the ranked list.
+        Prediction::query()->update(['is_ai5' => false]);
+
+        $response = $this->actingAs($freeUser)->get('/top-picks');
+
+        $response->assertOk();
+        $response->assertSee('Team Home 1');
+        $response->assertSee('Team Home 3');
+        $response->assertDontSee('Team Home 4');
+        $response->assertDontSee('Team Home 5');
     }
 
     public function test_active_subscriber_sees_zero_ads_and_unlocked_content(): void

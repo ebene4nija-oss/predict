@@ -32,6 +32,7 @@ class Setting extends Model
         'paypal_client_id',
         'paypal_secret',
         'paypal_webhook_id',
+        'mail_password',
     ];
 
     protected const CACHE_PREFIX = 'setting.';

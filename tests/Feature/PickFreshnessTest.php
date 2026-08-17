@@ -17,7 +17,9 @@ class PickFreshnessTest extends TestCase
     {
         return Prediction::create([
             'match_id' => $match->id,
-            'market' => 'win_draw_loss',
+            // A listed market: is_top10 and is_ai5 exist to fill public lists,
+            // and win_draw_loss has no tab of its own to fill.
+            'market' => 'win',
             'pick' => 'Home Win',
             'probability' => $probability,
             'is_top10' => false,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GameMatch;
+use App\Models\Post;
 
 class SitemapController extends Controller
 {
@@ -66,6 +67,24 @@ class SitemapController extends Controller
                 'lastmod' => now()->startOfMonth()->toIso8601String(),
                 'changefreq' => 'yearly',
                 'priority' => '0.3',
+            ];
+        }
+
+        $urls[] = [
+            'loc' => route('blog.index'),
+            'lastmod' => now()->toIso8601String(),
+            'changefreq' => 'daily',
+            'priority' => '0.7',
+        ];
+
+        // Published articles only: a draft in the sitemap is a 404 handed
+        // straight to a crawler.
+        foreach (Post::published()->select('slug', 'updated_at')->orderByDesc('published_at')->take(200)->get() as $post) {
+            $urls[] = [
+                'loc' => route('blog.show', $post->slug),
+                'lastmod' => $post->updated_at?->toIso8601String() ?? now()->toIso8601String(),
+                'changefreq' => 'weekly',
+                'priority' => '0.6',
             ];
         }
 

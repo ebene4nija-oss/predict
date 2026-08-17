@@ -114,6 +114,8 @@ class FootballDataProvider implements FixtureProvider
                 status: $this->mapStatus($match['status'] ?? ''),
                 homeForm: $this->teamForm($competitionCode, $home),
                 awayForm: $this->teamForm($competitionCode, $away),
+                homeTeamMeta: $this->teamMeta($match['homeTeam'] ?? []),
+                awayTeamMeta: $this->teamMeta($match['awayTeam'] ?? []),
             );
         }
 
@@ -154,15 +156,47 @@ class FootballDataProvider implements FixtureProvider
                 continue;
             }
 
+            // v4 carries the half-time score alongside the full-time one; the
+            // first-half markets are graded from it. Absent for some fixtures,
+            // so it stays null rather than defaulting.
+            $htHome = $match['score']['halfTime']['home'] ?? null;
+            $htAway = $match['score']['halfTime']['away'] ?? null;
+
             $results[] = new ResultData(
                 externalId: $externalId,
                 homeScore: (int) $home,
                 awayScore: (int) $away,
                 finishedAt: isset($match['lastUpdated']) ? Carbon::parse($match['lastUpdated']) : now(),
+                htHomeScore: is_numeric($htHome) ? (int) $htHome : null,
+                htAwayScore: is_numeric($htAway) ? (int) $htAway : null,
             );
         }
 
         return $results;
+    }
+
+    /**
+     * The club record attached to a fixture side.
+     *
+     * v4 returns id, name, shortName, tla and crest on every team object; only
+     * the name was being read, which is why the platform had no logos and had
+     * to join standings to fixtures by name.
+     *
+     * @param  array<string, mixed>  $team
+     * @return array<string, string|null>
+     */
+    protected function teamMeta(array $team): array
+    {
+        if (! isset($team['id'])) {
+            return [];
+        }
+
+        return [
+            'external_id' => (string) $team['id'],
+            'short_name' => isset($team['shortName']) ? (string) $team['shortName'] : null,
+            'tla' => isset($team['tla']) ? (string) $team['tla'] : null,
+            'crest_url' => isset($team['crest']) ? (string) $team['crest'] : null,
+        ];
     }
 
     /**

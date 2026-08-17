@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Http;
 class PreviewGenerationService
 {
     /**
+     * Used when neither the dashboard nor the environment names a model.
+     */
+    public const DEFAULT_MODEL = 'gemini-2.5-flash';
+
+    /**
      * Generate narrative match preview using Gemini API.
      * Match Previews are handled by Gemini AI.
      */
@@ -34,7 +39,7 @@ class PreviewGenerationService
                     . "AI probabilities: {$predictionsSummary}. "
                     . "Format the response into 2 structured, data-dense, objective paragraphs without HTML tags. Make it engaging for football fans and search engines.";
 
-                $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+                $response = Http::timeout(10)->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model()}:generateContent?key={$apiKey}", [
                     'contents' => [
                         [
                             'parts' => [
@@ -48,7 +53,8 @@ class PreviewGenerationService
                     $json = $response->json();
                     $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? null;
                     if ($text) {
-                        $match->update(['preview_text' => trim($text)]);
+                        $this->store($match, trim($text), GameMatch::PREVIEW_SOURCE_MODEL);
+
                         return trim($text);
                     }
                 }
@@ -75,7 +81,42 @@ class PreviewGenerationService
             $preview .= " Team news: {$match->injury_notes}.";
         }
 
-        $match->update(['preview_text' => $preview]);
+        $this->store($match, $preview, GameMatch::PREVIEW_SOURCE_FALLBACK);
+
         return $preview;
+    }
+
+    /**
+     * The Gemini model previews are written with.
+     *
+     * Dashboard first, then .env, then the constant — a blank dashboard field
+     * means "use the default", not "call an empty model name".
+     */
+    public function model(): string
+    {
+        return Setting::credential('gemini_model', 'services.gemini.model') ?: self::DEFAULT_MODEL;
+    }
+
+    /**
+     * Persist a preview and stamp how it was produced.
+     *
+     * The refresh stamp is only set once the fixture is inside its refresh
+     * window, so an early write does not consume the one rewrite the fixture is
+     * entitled to closer to kickoff. Fallback text never claims the refresh —
+     * it is a placeholder waiting for the model to come back.
+     */
+    protected function store(GameMatch $match, string $text, string $source): void
+    {
+        $attributes = [
+            'preview_text' => $text,
+            'preview_source' => $source,
+            'preview_generated_at' => $match->preview_generated_at ?? now(),
+        ];
+
+        if ($source === GameMatch::PREVIEW_SOURCE_MODEL && $match->isInPreviewRefreshWindow()) {
+            $attributes['preview_refreshed_at'] = now();
+        }
+
+        $match->update($attributes);
     }
 }

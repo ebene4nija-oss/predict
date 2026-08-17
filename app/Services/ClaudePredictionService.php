@@ -10,6 +10,7 @@ use Anthropic\Messages\OutputConfig;
 use App\Models\GameMatch;
 use App\Models\Setting;
 use App\Support\MarketOutcome;
+use App\Support\MarketRegistry;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -58,14 +59,20 @@ class ClaudePredictionService
             return null;
         }
 
+        // Only markets this fixture can support: asking for a corners
+        // probability on a fixture with no corner rates would get a confident
+        // answer invented from club reputation, and one that can never be
+        // settled because no corner result will arrive for it either.
+        $markets = MarketRegistry::generatedFor($match->hasCountStats());
+
         try {
             $message = $this->client()->messages->create(
                 maxTokens: 8192,
-                messages: [['role' => 'user', 'content' => $this->prompt($match)]],
+                messages: [['role' => 'user', 'content' => $this->prompt($match, $markets)]],
                 model: (string) Setting::get('claude_model', self::DEFAULT_MODEL),
                 outputConfig: OutputConfig::with(
                     effort: (string) Setting::get('claude_effort', self::DEFAULT_EFFORT),
-                    format: JSONOutputFormat::with(schema: $this->schema()),
+                    format: JSONOutputFormat::with(schema: $this->schema($markets)),
                 ),
                 system: 'You are a quantitative football analyst. Estimate genuine probabilities '
                     .'from the evidence supplied. Do not inflate confidence: if a market is close '
@@ -94,7 +101,7 @@ class ClaudePredictionService
             return null;
         }
 
-        return $this->normalise($this->extractPayload($message), $match);
+        return $this->normalise($this->extractPayload($message), $match, array_keys($markets));
     }
 
     /**
@@ -134,13 +141,14 @@ class ClaudePredictionService
      * number.
      *
      * @param  array<string, mixed>  $payload
+     * @param  array<int, string>  $expected  Market keys this fixture supports.
      * @return array<string, array{pick: string, probability: float, rationale: string}>|null
      */
-    protected function normalise(array $payload, GameMatch $match): ?array
+    protected function normalise(array $payload, GameMatch $match, array $expected): ?array
     {
         $markets = [];
 
-        foreach (MarketOutcome::MARKETS as $market) {
+        foreach ($expected as $market) {
             $entry = $payload[$market] ?? null;
 
             if (! is_array($entry)) {
@@ -182,9 +190,19 @@ class ClaudePredictionService
         return $markets;
     }
 
-    protected function prompt(GameMatch $match): string
+    /**
+     * @param  array<string, \App\Support\Market>  $markets
+     */
+    protected function prompt(GameMatch $match, array $markets): string
     {
         $kickoff = $match->kickoff_at?->toDayDateTimeString() ?? 'unknown';
+
+        $instructions = [];
+
+        foreach ($markets as $key => $market) {
+            $picks = implode(', ', array_map(fn ($p) => "\"{$p}\"", $market->selections()));
+            $instructions[] = "- {$key} ({$market->label}): pick one of {$picks}";
+        }
 
         return implode("\n", [
             "Fixture: {$match->home_team} (home) vs {$match->away_team} (away)",
@@ -195,22 +213,24 @@ class ClaudePredictionService
             'Head to head: '.($match->h2h_summary ?: 'not supplied'),
             'Team news: '.($match->injury_notes ?: 'not supplied'),
             '',
-            'Estimate the probability of your selected outcome in each of three markets:',
-            '- win_draw_loss: pick one of "Home Win", "Draw", "Away Win"',
-            '- gg (both teams to score): pick "GG (Yes)" or "NG (No)"',
-            '- over_2_5 (total goals): pick "Over 2.5" or "Under 2.5"',
+            'Estimate the probability of your selected outcome in each of '.count($markets).' markets:',
+            ...$instructions,
             '',
             'The probability is that of the outcome you picked, not of the favourite.',
+            // win and win_draw_loss are two readings of one match, so a home
+            // side cannot be 60% to win outright and 40% on the 1X2.
+            'Keep the markets mutually consistent: they describe the same match.',
             'Keep each rationale under 200 characters.',
         ]);
     }
 
     /**
+     * @param  array<string, \App\Support\Market>  $markets
      * @return array<string, mixed>
      */
-    protected function schema(): array
+    protected function schema(array $markets): array
     {
-        $market = fn (array $picks): array => [
+        $shape = fn (array $picks): array => [
             'type' => 'object',
             'properties' => [
                 'pick' => ['type' => 'string', 'enum' => $picks],
@@ -221,14 +241,16 @@ class ClaudePredictionService
             'additionalProperties' => false,
         ];
 
+        $properties = [];
+
+        foreach ($markets as $key => $market) {
+            $properties[$key] = $shape($market->selections());
+        }
+
         return [
             'type' => 'object',
-            'properties' => [
-                'win_draw_loss' => $market(['Home Win', 'Draw', 'Away Win']),
-                'gg' => $market(['GG (Yes)', 'NG (No)']),
-                'over_2_5' => $market(['Over 2.5', 'Under 2.5']),
-            ],
-            'required' => MarketOutcome::MARKETS,
+            'properties' => $properties,
+            'required' => array_keys($properties),
             'additionalProperties' => false,
         ];
     }
