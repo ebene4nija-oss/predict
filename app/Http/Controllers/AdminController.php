@@ -10,6 +10,7 @@ use App\Jobs\FixtureIngestionJob;
 use App\Jobs\RankingJob;
 use App\Jobs\Ai5SelectionJob;
 use App\Services\ClaudePredictionService;
+use App\Services\PreviewGenerationService;
 use App\Support\PoissonEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
