@@ -116,6 +116,60 @@
                 </div>
             </div>
 
+            <!-- Match Total Statistics — settles Corners and Cards markets -->
+            <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-200">Match Counts & Statistics <span class="text-xs font-normal text-slate-500">(optional)</span></h3>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Settles <strong>Top 10 Corners (Over 8.5)</strong> and <strong>Top 10 Cards (Over 2.5)</strong>. Leave blank if count data is unavailable.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- Corners -->
+                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                        <div class="text-xs font-bold text-orange-400 uppercase tracking-wider">⛳ Match Corners</div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="home_corners" class="block text-[11px] text-slate-400 mb-1">{{ $match->home_team }}</label>
+                                <input type="number" name="home_corners" id="home_corners" min="0"
+                                    value="{{ old('home_corners', $match->result->home_corners ?? '') }}"
+                                    placeholder="0"
+                                    class="w-full text-center bg-slate-950 border border-slate-700 text-white font-mono text-base font-bold rounded-xl py-1.5 focus:border-orange-400 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label for="away_corners" class="block text-[11px] text-slate-400 mb-1">{{ $match->away_team }}</label>
+                                <input type="number" name="away_corners" id="away_corners" min="0"
+                                    value="{{ old('away_corners', $match->result->away_corners ?? '') }}"
+                                    placeholder="0"
+                                    class="w-full text-center bg-slate-950 border border-slate-700 text-white font-mono text-base font-bold rounded-xl py-1.5 focus:border-orange-400 focus:outline-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yellow Cards -->
+                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                        <div class="text-xs font-bold text-rose-400 uppercase tracking-wider">🟨 Yellow Cards</div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="home_yellows" class="block text-[11px] text-slate-400 mb-1">{{ $match->home_team }}</label>
+                                <input type="number" name="home_yellows" id="home_yellows" min="0"
+                                    value="{{ old('home_yellows', $match->result->home_yellows ?? '') }}"
+                                    placeholder="0"
+                                    class="w-full text-center bg-slate-950 border border-slate-700 text-white font-mono text-base font-bold rounded-xl py-1.5 focus:border-rose-400 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label for="away_yellows" class="block text-[11px] text-slate-400 mb-1">{{ $match->away_team }}</label>
+                                <input type="number" name="away_yellows" id="away_yellows" min="0"
+                                    value="{{ old('away_yellows', $match->result->away_yellows ?? '') }}"
+                                    placeholder="0"
+                                    class="w-full text-center bg-slate-950 border border-slate-700 text-white font-mono text-base font-bold rounded-xl py-1.5 focus:border-rose-400 focus:outline-none" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Submit Button -->
             <div class="border-t border-slate-800 pt-6 flex items-center justify-end space-x-4">
                 <a href="{{ route('admin.matches.index') }}" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-all">

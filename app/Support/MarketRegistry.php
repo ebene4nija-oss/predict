@@ -61,18 +61,11 @@ final class MarketRegistry
     /**
      * Markets that can be produced for a specific fixture.
      *
-     * The count markets need both clubs to carry corner and card rates; without
-     * them the fixture is simply absent from those lists, which is how the
-     * Champions League gap resolves itself without special-casing.
-     *
      * @return array<string, Market>
      */
-    public static function generatedFor(bool $hasTeamStats): array
+    public static function generatedFor(bool $hasTeamStats = true): array
     {
-        return array_filter(
-            self::generated(),
-            fn (Market $market) => $hasTeamStats || ! $market->needsTeamStats,
-        );
+        return self::generated();
     }
 
     /**

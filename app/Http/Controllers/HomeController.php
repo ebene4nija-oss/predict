@@ -26,12 +26,23 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        $aiTop5 = Prediction::with('match')
+        $aiTop5 = Prediction::with(['match.homeClub', 'match.awayClub'])
             ->where('is_ai5', true)
             ->forUpcomingMatches()
             ->orderBy('probability', 'desc')
             ->take(5)
             ->get();
+
+        if ($aiTop5->isEmpty()) {
+            (new \App\Jobs\Ai5SelectionJob)->handle();
+
+            $aiTop5 = Prediction::with(['match.homeClub', 'match.awayClub'])
+                ->where('is_ai5', true)
+                ->forUpcomingMatches()
+                ->orderBy('probability', 'desc')
+                ->take(5)
+                ->get();
+        }
 
         $stats = $trackRecordService->getAccuracyStats();
 

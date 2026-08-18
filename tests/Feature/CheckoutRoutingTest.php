@@ -114,4 +114,40 @@ class CheckoutRoutingTest extends TestCase
             ->assertRedirect(route('subscription.pricing'))
             ->assertSessionHas('error');
     }
+
+    public function test_admin_custom_prices_override_default_config(): void
+    {
+        \App\Models\Setting::set('price_ngn', 7500);
+        \App\Models\Setting::set('price_usd', 9.99);
+
+        $ngResolved = $this->resolveFor(['CF-IPCountry' => 'NG']);
+        $this->assertSame(7500.0, $ngResolved['amount']);
+        $this->assertSame('₦7,500', $ngResolved['formatted']);
+
+        $usResolved = $this->resolveFor(['CF-IPCountry' => 'US']);
+        $this->assertSame(9.99, $usResolved['amount']);
+        $this->assertSame('$9.99', $usResolved['formatted']);
+    }
+
+    public function test_admin_settings_can_update_subscription_prices(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'fixture_provider' => 'sample',
+            'min_confidence_threshold' => 0.55,
+            'home_advantage' => 1.15,
+            'default_league_average' => 1.35,
+            'prediction_provider' => 'claude',
+            'paypal_mode' => 'sandbox',
+            'price_ngn' => 6000,
+            'price_usd' => 7.50,
+            'pricing_default_country' => 'NG',
+        ]);
+
+        $response->assertRedirect(route('admin.settings'));
+        $this->assertSame(6000.0, (new PricingResolver)->amountFor('NGN'));
+        $this->assertSame(7.50, (new PricingResolver)->amountFor('USD'));
+    }
 }
+

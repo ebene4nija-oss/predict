@@ -23,16 +23,21 @@ class Setting extends Model
     public const SECRET_KEYS = [
         'claude_api_key',
         'gemini_api_key',
+        'openai_api_key',
+        'kimi_api_key',
         'telegram_bot_token',
         'telegram_webhook_secret',
         'football_data_token',
         'flutterwave_secret_key',
         'flutterwave_public_key',
+        'flutterwave_encryption_key',
         'flutterwave_webhook_hash',
         'paypal_client_id',
         'paypal_secret',
         'paypal_webhook_id',
         'mail_password',
+        'sportybet_cookie',
+        'sportybet_token',
     ];
 
     protected const CACHE_PREFIX = 'setting.';
@@ -70,10 +75,14 @@ class Setting extends Model
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        $value = Cache::rememberForever(
-            self::CACHE_PREFIX.$key,
-            fn () => static::where('key', $key)->value('value') ?? false
-        );
+        try {
+            $value = Cache::rememberForever(
+                self::CACHE_PREFIX.$key,
+                fn () => static::where('key', $key)->value('value') ?? false
+            );
+        } catch (\Throwable) {
+            return $default;
+        }
 
         // `false` is the sentinel for "no row"; a stored empty string is a
         // real value and must not fall through to the default.

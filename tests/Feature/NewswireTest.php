@@ -357,7 +357,7 @@ class NewswireTest extends TestCase
             ->assertRedirect(route('home'));
     }
 
-    public function test_readers_are_shown_the_credit_and_a_link_to_the_original(): void
+    public function test_articles_do_not_link_back_to_original_report(): void
     {
         Http::fake(['*' => Http::response($this->rss())]);
         $this->activeSource();
@@ -368,8 +368,7 @@ class NewswireTest extends TestCase
 
         $this->get(route('blog.show', $post))
             ->assertOk()
-            ->assertSee('Written in response to reporting by')
-            ->assertSee('Example Football')
-            ->assertSee('https://example.com/news/striker-out');
+            ->assertDontSee('Written in response to reporting by')
+            ->assertDontSee('https://example.com/news/striker-out');
     }
 }

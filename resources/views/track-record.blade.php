@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Public Track Record & Accuracy Audit — Guaranteed Correct')
+@section('title', 'Public Track Record & Audited AI Prediction Accuracy — GUARANTEED CORRECT')
+@section('meta_description', '100% transparent historical accuracy audit for all AI model predictions and expert picks, calculated directly against settled final scores.')
+@section('meta_keywords', 'prediction track record, football predictions accuracy, audited betting tips, Poisson xG win rate, verified betting track record, football betting performance')
+@section('canonical', route('track-record'))
 
 @section('content')
     <x-ad-banner type="header" />
@@ -17,25 +20,39 @@
         </div>
 
         <!-- Top Accuracy Stat Cards -->
+        @php
+            $listedMarkets = \App\Support\MarketRegistry::listed();
+            $marketColors = [
+                'win'              => ['border' => 'border-sky-500/30',     'text' => 'text-sky-400'],
+                'over_2_5'         => ['border' => 'border-emerald-500/30', 'text' => 'text-emerald-400'],
+                'gg'               => ['border' => 'border-indigo-500/30',  'text' => 'text-indigo-400'],
+                'fh_over_0_5'      => ['border' => 'border-teal-500/30',    'text' => 'text-teal-400'],
+                'ht_win'           => ['border' => 'border-violet-500/30',  'text' => 'text-violet-400'],
+                'corners_over_8_5' => ['border' => 'border-orange-500/30',  'text' => 'text-orange-400'],
+                'cards_over_2_5'   => ['border' => 'border-rose-500/30',    'text' => 'text-rose-400'],
+            ];
+            $fallbackColor = ['border' => 'border-slate-700', 'text' => 'text-slate-300'];
+        @endphp
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {{-- Overall AI accuracy --}}
             <div class="p-6 rounded-2xl glass-panel border border-sky-500/30">
                 <div class="text-xs text-slate-400 font-semibold uppercase">Overall AI Win Rate</div>
                 <div class="text-3xl font-black text-[#38BDF8] mt-2 font-mono">{{ $stats['ai']['overall']['rate'] }}%</div>
                 <div class="text-[11px] text-slate-500 mt-1">{{ $stats['ai']['overall']['won'] }} won / {{ $stats['ai']['overall']['total'] }} settled</div>
             </div>
 
-            <div class="p-6 rounded-2xl glass-panel border border-emerald-500/30">
-                <div class="text-xs text-slate-400 font-semibold uppercase">Over 2.5 Market Rate</div>
-                <div class="text-3xl font-black text-emerald-400 mt-2 font-mono">{{ $stats['ai']['over_2_5']['rate'] }}%</div>
-                <div class="text-[11px] text-slate-500 mt-1">{{ $stats['ai']['over_2_5']['won'] }} won / {{ $stats['ai']['over_2_5']['total'] }} settled</div>
-            </div>
+            {{-- Per-market AI accuracy --}}
+            @foreach($listedMarkets as $key => $definition)
+                @php $color = $marketColors[$key] ?? $fallbackColor; @endphp
+                <div class="p-6 rounded-2xl glass-panel border {{ $color['border'] }}">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">{{ $definition->label }}</div>
+                    <div class="text-3xl font-black {{ $color['text'] }} mt-2 font-mono">{{ $stats['ai'][$key]['rate'] ?? 0 }}%</div>
+                    <div class="text-[11px] text-slate-500 mt-1">{{ $stats['ai'][$key]['won'] ?? 0 }} won / {{ $stats['ai'][$key]['total'] ?? 0 }} settled</div>
+                </div>
+            @endforeach
 
-            <div class="p-6 rounded-2xl glass-panel border border-indigo-500/30">
-                <div class="text-xs text-slate-400 font-semibold uppercase">Both Teams Score (GG)</div>
-                <div class="text-3xl font-black text-indigo-400 mt-2 font-mono">{{ $stats['ai']['gg']['rate'] }}%</div>
-                <div class="text-[11px] text-slate-500 mt-1">{{ $stats['ai']['gg']['won'] }} won / {{ $stats['ai']['gg']['total'] }} settled</div>
-            </div>
-
+            {{-- Expert overall accuracy --}}
             <div class="p-6 rounded-2xl glass-panel border border-amber-500/30">
                 <div class="text-xs text-slate-400 font-semibold uppercase">Human Expert Rate</div>
                 <div class="text-3xl font-black text-[#F5A623] mt-2 font-mono">{{ $stats['expert']['overall']['rate'] }}%</div>
@@ -135,11 +152,20 @@
                                 @php
                                     // Same grader the published accuracy figures use,
                                     // so a badge here can never contradict the headline stats.
+                                    $gradingContext = $result->gradingContext();
+
+                                    // A market whose settle data has not arrived is
+                                    // unsettleable, not lost — skip rather than mis-badge.
+                                    if (! \App\Support\MarketOutcome::isDeterminable($pred->market, $gradingContext)) {
+                                        continue;
+                                    }
+
                                     $won = \App\Support\MarketOutcome::isWinningPick(
                                         $pred->market,
                                         $pred->pick,
                                         $result->home_score,
                                         $result->away_score,
+                                        $gradingContext,
                                     );
                                 @endphp
 

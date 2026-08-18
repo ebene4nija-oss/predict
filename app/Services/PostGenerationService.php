@@ -24,34 +24,87 @@ use Illuminate\Support\Facades\Log;
  */
 class PostGenerationService
 {
-    public const DEFAULT_MODEL = 'claude-opus-5';
+    public const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+    public const DEFAULT_CLAUDE_MODEL = 'claude-opus-5';
+    public const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
 
     /** Fixtures quoted to the model, so an article is grounded in real data. */
     protected const CONTEXT_FIXTURES = 8;
 
     public function __construct(protected ?Client $client = null) {}
 
-    public function isConfigured(): bool
+    public function provider(): string
     {
-        return $this->apiKey() !== '';
+        $explicit = Setting::get('news_ai_provider');
+        if (filled($explicit)) {
+            return (string) $explicit;
+        }
+
+        // Auto-detect: prefer gemini if key exists, otherwise claude, otherwise openai
+        if (filled($this->geminiApiKey())) {
+            return 'gemini';
+        }
+
+        if (filled($this->claudeApiKey())) {
+            return 'claude';
+        }
+
+        if (filled($this->openAiApiKey())) {
+            return 'openai';
+        }
+
+        return 'gemini';
     }
 
-    protected function apiKey(): string
+    public function isConfigured(): bool
+    {
+        return match ($this->provider()) {
+            'gemini' => filled($this->geminiApiKey()),
+            'claude' => filled($this->claudeApiKey()),
+            'openai' => filled($this->openAiApiKey()),
+            default => false,
+        };
+    }
+
+    protected function geminiApiKey(): string
+    {
+        $key = Setting::credential('gemini_api_key', 'services.gemini.key');
+
+        return str_contains(strtoupper($key), 'MOCK') ? '' : $key;
+    }
+
+    protected function claudeApiKey(): string
     {
         $key = Setting::credential('claude_api_key', 'services.claude.key');
 
         return str_contains(strtoupper($key), 'MOCK') ? '' : $key;
     }
 
-    protected function model(): string
+    protected function openAiApiKey(): string
     {
-        return (string) Setting::get('blog_ai_model')
-            ?: (string) Setting::get('claude_model', self::DEFAULT_MODEL);
+        $key = Setting::credential('openai_api_key', 'services.openai.key');
+
+        return str_contains(strtoupper($key), 'MOCK') ? '' : $key;
+    }
+
+    public function model(): string
+    {
+        $override = (string) Setting::get('blog_ai_model');
+        if (filled($override)) {
+            return $override;
+        }
+
+        return match ($this->provider()) {
+            'gemini' => (string) (Setting::get('gemini_prediction_model') ?: self::DEFAULT_GEMINI_MODEL),
+            'claude' => (string) (Setting::get('claude_model') ?: self::DEFAULT_CLAUDE_MODEL),
+            'openai' => (string) (Setting::get('openai_model') ?: self::DEFAULT_OPENAI_MODEL),
+            default => self::DEFAULT_GEMINI_MODEL,
+        };
     }
 
     protected function client(): Client
     {
-        return $this->client ??= new Client(apiKey: $this->apiKey());
+        return $this->client ??= new Client(apiKey: $this->claudeApiKey());
     }
 
     /**
@@ -64,7 +117,7 @@ class PostGenerationService
     public function generate(string $category, ?string $brief = null, ?int $authorId = null): ?Post
     {
         if (! $this->isConfigured()) {
-            Log::warning('Post generation skipped: Claude is not configured.');
+            Log::warning("Post generation skipped: {$this->provider()} is not configured.");
 
             return null;
         }
@@ -89,7 +142,7 @@ class PostGenerationService
     public function rewrite(FeedItem $item, NewsSource $source): ?Post
     {
         if (! $this->isConfigured()) {
-            Log::warning('Rewrite skipped: Claude is not configured.', ['source' => $source->name]);
+            Log::warning("Rewrite skipped: {$this->provider()} is not configured.", ['source' => $source->name]);
 
             return null;
         }
@@ -133,7 +186,7 @@ class PostGenerationService
 
         // A title-only response is a failed generation, not a stub to publish.
         if ($title === '' || mb_strlen($body) < 200) {
-            Log::warning('Claude returned an unusably short article', [
+            Log::warning("{$this->provider()} returned an unusably short article", [
                 'category' => $category,
                 'title_length' => mb_strlen($title),
                 'body_length' => mb_strlen($body),
@@ -162,6 +215,141 @@ class PostGenerationService
      * @return array<string, mixed>|null
      */
     protected function requestArticle(string $prompt, string $category): ?array
+    {
+        return match ($this->provider()) {
+            'gemini' => $this->requestGeminiArticle($prompt, $category),
+            'openai' => $this->requestOpenAiArticle($prompt, $category),
+            default => $this->requestClaudeArticle($prompt, $category),
+        };
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function requestGeminiArticle(string $prompt, string $category): ?array
+    {
+        $apiKey = $this->geminiApiKey();
+        if ($apiKey === '') {
+            return null;
+        }
+
+        $systemInstruction = 'You are the senior staff writer for a football analytics publication. '
+            .'Write in plain, specific prose. Never invent scorelines, transfer fees, quotes, '
+            .'injuries, or statistics: if you were not given a fact, write around it rather than '
+            .'filling the gap. Never promise winnings, guaranteed results, or risk-free betting. '
+            .'Respond with a valid JSON object matching this schema: '
+            .'{"title": "...", "excerpt": "...", "meta_description": "...", "body": "..."}';
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(25)->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model()}:generateContent?key={$apiKey}", [
+                'system_instruction' => [
+                    'parts' => [
+                        ['text' => $systemInstruction],
+                    ],
+                ],
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $prompt],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'responseMimeType' => 'application/json',
+                    'temperature' => 0.4,
+                ],
+            ]);
+
+            if (! $response->successful()) {
+                Log::error('Gemini article request failed', [
+                    'category' => $category,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            $json = $response->json();
+            $rawText = $json['candidates'][0]['content']['parts'][0]['text'] ?? null;
+            if (! $rawText) {
+                return null;
+            }
+
+            $parsed = json_decode($rawText, true);
+            if (is_array($parsed) && isset($parsed['title'], $parsed['body'])) {
+                return $parsed;
+            }
+
+            Log::warning('Gemini article response contained no valid JSON payload', ['raw' => $rawText]);
+
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('Gemini article request threw exception', [
+                'category' => $category,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function requestOpenAiArticle(string $prompt, string $category): ?array
+    {
+        $apiKey = $this->openAiApiKey();
+        if ($apiKey === '') {
+            return null;
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withToken($apiKey)->timeout(25)->post('https://api.openai.com/v1/chat/completions', [
+                'model' => $this->model(),
+                'response_format' => ['type' => 'json_object'],
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are the staff writer for a football analytics publication. '
+                            .'Write in plain, specific prose. Never invent scorelines, transfer fees, quotes, '
+                            .'injuries, or statistics. Never promise winnings or risk-free betting. '
+                            .'Respond with a valid JSON object with keys: title, excerpt, meta_description, body.',
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $prompt,
+                    ],
+                ],
+            ]);
+
+            if (! $response->successful()) {
+                Log::error('OpenAI article request failed', [
+                    'category' => $category,
+                    'status' => $response->status(),
+                ]);
+
+                return null;
+            }
+
+            $content = $response->json('choices.0.message.content');
+
+            return is_string($content) ? json_decode($content, true) : null;
+        } catch (\Throwable $e) {
+            Log::error('OpenAI article request threw', [
+                'category' => $category,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function requestClaudeArticle(string $prompt, string $category): ?array
     {
         try {
             $message = $this->client()->messages->create(
@@ -273,16 +461,14 @@ class PostGenerationService
     protected function rewritePrompt(FeedItem $item, NewsSource $source): string
     {
         $lines = [
-            'A football story has been reported elsewhere. Write our own original article responding to it.',
+            'A football news topic has emerged. Write a completely original, standalone article covering this topic for our football betting and analytics platform.',
             'Category: '.(Post::CATEGORIES[$source->category] ?? 'Football News'),
             '',
-            'The outside report:',
-            'Publication: '.$source->name,
-            'Headline: '.$item->title,
+            'Topic headline: '.$item->title,
         ];
 
         if ($item->summary !== '') {
-            $lines[] = 'Summary as published: '.$item->summary;
+            $lines[] = 'Topic context: '.$item->summary;
         }
 
         $lines[] = '';
@@ -295,17 +481,14 @@ class PostGenerationService
             $lines[] = '';
         }
 
-        $lines[] = 'Rules, in order of importance:';
-        $lines[] = '- Do not reproduce or closely paraphrase the wording above. Write a genuinely new piece.';
-        $lines[] = '- Do not quote the original article. Do not invent quotes from anyone.';
-        $lines[] = '- The only facts you have about this story are in the summary above. Treat them as reported '
-            .'claims, not confirmed fact, and attribute them in the text (for example "'.$source->name.' reports that…").';
-        $lines[] = '- Lead with the analysis a predictions site can add: what it changes for the fixtures and '
-            .'probabilities listed above, or for the teams involved. If it changes nothing measurable, say so plainly.';
-        $lines[] = '- If the story has no bearing on football betting or the fixtures we cover, write a short, '
-            .'straight news item instead of inflating it.';
+        $lines[] = 'Requirements & Editorial Guidelines:';
+        $lines[] = '- Write a 100% original, authoritative editorial piece in our platform\'s own expert voice.';
+        $lines[] = '- DO NOT mention or credit any external publication by name (e.g. do not say "BBC reports", "Sky Sports says", etc.).';
+        $lines[] = '- DO NOT include any external links, URLs, or references to outside websites.';
+        $lines[] = '- DO NOT copy or closely paraphrase any text verbatim. Frame the news, tactics, and analysis freshly and professionally.';
+        $lines[] = '- Ground the piece with insights on team form, betting dynamics, or the upcoming fixtures and probabilities listed above.';
         $lines[] = '- 400 to 700 words, plain text paragraphs separated by a blank line, no HTML or markdown headings.';
-        $lines[] = '- Write your own headline under 70 characters. Do not reuse the headline above.';
+        $lines[] = '- Write your own catchy headline under 70 characters. Do not copy the topic headline.';
         $lines[] = '- Include a responsible-gambling note in the closing paragraph.';
 
         return implode("\n", $lines);

@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('title', 'Refund & Cancellation Policy — Guaranteed Correct')
+@section('meta_description', 'Clear refund terms and subscription cancellation guidelines for Guaranteed Correct PRO users.')
+@section('canonical', route('legal.refunds'))
 
 @section('content')
 <x-legal-shell eyebrow="Legal" heading="Refund &amp; Cancellation Policy"

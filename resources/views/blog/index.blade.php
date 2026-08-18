@@ -1,9 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Football News & Announcements — Guaranteed Correct')
-@section('meta_description', 'Football news, betting analysis and site announcements from the Guaranteed Correct newsroom.')
+@section('title', 'Football News, Tactical Insights & Editorial Announcements — GUARANTEED CORRECT')
+@section('meta_description', 'Breaking football news, betting analysis, tactical previews, and site announcements from the Guaranteed Correct newsroom.')
+@section('meta_keywords', 'football news, betting analysis, soccer strategy, tactical insights, football newsroom, sports announcements')
+@section('canonical', route('blog.index'))
 
 @section('content')
+    <x-ad-banner type="header" />
+
     <div class="max-w-6xl mx-auto space-y-8 py-4">
         <div>
             <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30 text-xs font-bold mb-2">
@@ -14,6 +18,9 @@
                 Analysis, fixture context and platform updates. Every article says whether a person or the model wrote it.
             </p>
         </div>
+
+        <!-- Official Telegram Community Banner -->
+        <x-telegram-banner />
 
         {{-- Category filter --}}
         <div class="flex items-center gap-2 flex-wrap text-xs font-bold">
@@ -50,6 +57,9 @@
                     </a>
                 @endforeach
             </div>
+
+            <!-- In-Content Ad Placement -->
+            <x-ad-banner type="in-content" />
 
             {{ $posts->links() }}
         @endif

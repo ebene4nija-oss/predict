@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Upgrade to Guaranteed Correct PRO — Unlimited Top Picks & Expert Access')
+@section('title', 'Upgrade to PRO VIP — Unlimited AI Football Picks & Ad-Free Experience')
+@section('meta_description', 'Unlock unlimited access to all AI Top 10 prediction lists, verified human expert insights, Telegram alerts, and an ad-free experience.')
+@section('meta_keywords', 'VIP football tips, premium predictions subscription, PRO betting picks, unlimited AI predictions, ad-free football tips')
+@section('canonical', route('subscription.pricing'))
 
 @section('content')
     <div class="max-w-xl mx-auto py-8">

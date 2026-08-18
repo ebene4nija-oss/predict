@@ -25,6 +25,9 @@ class PredictionService
 {
     public function __construct(
         protected ClaudePredictionService $claude,
+        protected OpenAiPredictionService $openai,
+        protected GeminiPredictionService $gemini,
+        protected KimiPredictionService $kimi,
         protected StatisticalPredictionService $statistical,
     ) {}
 
@@ -62,7 +65,7 @@ class PredictionService
     }
 
     /**
-     * Claude when configured and healthy, the statistical model otherwise.
+     * Selected AI model when configured and healthy, the statistical model otherwise.
      *
      * @return array{0: array<string, array{pick: string, probability: float, rationale: string}>, 1: string}
      */
@@ -77,8 +80,46 @@ class PredictionService
                 return [$markets, 'claude'];
             }
 
-            // generate() has already logged why; recorded here so the stored
-            // row shows the pick did not come from the advertised engine.
+            return [$this->statistical->generate($match), 'poisson_fallback'];
+        }
+
+        if (in_array($provider, ['chatgpt', 'openai'], true) && $this->openai->isConfigured()) {
+            $markets = $this->openai->generate($match);
+
+            if ($markets !== null) {
+                return [$markets, 'chatgpt'];
+            }
+
+            return [$this->statistical->generate($match), 'poisson_fallback'];
+        }
+
+        if ($provider === 'gemini' && $this->gemini->isConfigured()) {
+            $markets = $this->gemini->generate($match);
+
+            if ($markets !== null) {
+                return [$markets, 'gemini'];
+            }
+
+            return [$this->statistical->generate($match), 'poisson_fallback'];
+        }
+
+        if ($provider === 'kimi' && $this->kimi->isConfigured()) {
+            $markets = $this->kimi->generate($match);
+
+            if ($markets !== null) {
+                return [$markets, 'kimi'];
+            }
+
+            return [$this->statistical->generate($match), 'poisson_fallback'];
+        }
+
+        if ($provider !== 'poisson_xg') {
+            // Selected provider was not configured or unrecognized; log and fallback
+            Log::info('Prediction provider unconfigured or unavailable, using Poisson fallback', [
+                'provider' => $provider,
+                'match_id' => $match->id,
+            ]);
+
             return [$this->statistical->generate($match), 'poisson_fallback'];
         }
 

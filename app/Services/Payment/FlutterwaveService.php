@@ -29,6 +29,16 @@ class FlutterwaveService
         return Setting::credential('flutterwave_secret_key', 'services.flutterwave.secret_key');
     }
 
+    public function publicKey(): string
+    {
+        return Setting::credential('flutterwave_public_key', 'services.flutterwave.public_key');
+    }
+
+    public function encryptionKey(): string
+    {
+        return Setting::credential('flutterwave_encryption_key', 'services.flutterwave.encryption_key');
+    }
+
     protected function webhookHash(): string
     {
         return Setting::credential('flutterwave_webhook_hash', 'services.flutterwave.webhook_hash');

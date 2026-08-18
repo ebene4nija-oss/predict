@@ -78,7 +78,7 @@ class NewsroomTest extends TestCase
         $this->get(route('blog.show', $post))
             ->assertOk()
             ->assertSee('AI WRITTEN')
-            ->assertSee('drafted by an AI model');
+            ->assertDontSee('drafted by an AI model');
     }
 
     public function test_human_articles_are_not_labelled_as_ai(): void

@@ -61,10 +61,20 @@ class PayPalService
         return $this->clientId() === '' || str_contains(strtoupper($this->clientId()), 'MOCK');
     }
 
+    public function email(): string
+    {
+        return Setting::credential('paypal_email', 'services.paypal.email');
+    }
+
+    public function isConfigured(): bool
+    {
+        return filled($this->email()) || (filled($this->clientId()) && filled($this->secret()));
+    }
+
     /**
      * Create a PayPal subscription approval link. Null when unavailable.
      */
-    public function createSubscriptionLink(User $user): ?string
+    public function createSubscriptionLink(User $user, ?float $amount = null, string $currency = 'USD'): ?string
     {
         if ($this->isMockMode()) {
             return route('subscription.callback', [
@@ -73,8 +83,51 @@ class PayPalService
             ]);
         }
 
+        $email = $this->email();
+
+        // Direct PayPal Email / PayPal.me Mode (No developer API keys required)
+        if (filled($email)) {
+            $pricing = app(PricingResolver::class)->forUser($user);
+            $amount = $amount ?? (float) ($pricing['amount'] ?? 4.99);
+            $currency = $currency ?: ($pricing['currency'] ?? 'USD');
+
+            // If it's a paypal.me link
+            if (str_contains(strtolower($email), 'paypal.me/')) {
+                $cleanHandle = trim(str_ireplace(['https://', 'http://', 'www.', 'paypal.me/'], '', $email), '/');
+
+                return "https://paypal.me/{$cleanHandle}/" . number_format($amount, 2, '.', '') . "{$currency}";
+            }
+
+            // Standard PayPal Direct Subscription / Checkout Link
+            $returnUrl = route('subscription.callback', [
+                'gateway' => 'paypal',
+                'subscription_id' => 'PP-SUB-' . strtoupper(substr(md5($user->id . time() . uniqid()), 0, 12)),
+            ]);
+            $cancelUrl = route('subscription.pricing');
+
+            $params = http_build_query([
+                'cmd' => '_xclick-subscriptions',
+                'business' => $email,
+                'item_name' => 'GUARANTEED CORRECT Monthly PRO - ' . $user->email,
+                'item_number' => 'PRO_MONTHLY_' . $user->id,
+                'currency_code' => $currency,
+                'a3' => number_format($amount, 2, '.', ''),
+                'p3' => 1,
+                't3' => 'M',
+                'src' => 1,
+                'sra' => 1,
+                'no_shipping' => 1,
+                'no_note' => 1,
+                'custom' => (string) $user->id,
+                'return' => $returnUrl,
+                'cancel_return' => $cancelUrl,
+            ]);
+
+            return "https://www.paypal.com/cgi-bin/webscr?{$params}";
+        }
+
         if ($this->clientId() === '' || $this->secret() === '' || $this->planId() === '') {
-            Log::error('PayPal credentials or plan id are not configured.');
+            Log::error('PayPal email or API credentials/plan id are not configured.');
 
             return null;
         }
@@ -140,6 +193,16 @@ class PayPalService
         }
 
         if ($this->isMockMode()) {
+            return $subscriptionId;
+        }
+
+        // Direct PayPal Email mode
+        if (filled($this->email()) && str_starts_with($subscriptionId, 'PP-SUB-')) {
+            Log::info('Direct PayPal Email subscription activated on callback', [
+                'user_id' => $user->id,
+                'subscription_id' => $subscriptionId,
+            ]);
+
             return $subscriptionId;
         }
 

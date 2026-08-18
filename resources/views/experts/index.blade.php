@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Expert Picks — Human Analyst Insights')
+@section('title', 'Verified Human Expert Football Picks & Tactical Predictions — GUARANTEED CORRECT')
+@section('meta_description', 'Independent, audited tactical betting insights from verified human handicappers publishing alongside the AI prediction engine.')
+@section('meta_keywords', 'expert football picks, human sports betting tips, verified handicappers, professional football tipsters, tactical soccer analysis')
+@section('canonical', route('expert.picks'))
 
 @section('content')
     <x-ad-banner type="header" />
@@ -25,6 +28,9 @@
             @endauth
         </div>
 
+        <!-- Official Telegram Community Banner -->
+        <x-telegram-banner />
+
         <div class="space-y-4">
             @foreach($expertPicks as $pick)
                 @php
@@ -40,7 +46,7 @@
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                             <!-- Expert Byline -->
                             <div class="flex items-center space-x-3">
-                                <img src="{{ $pick->expert->photo_path ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150' }}" class="w-11 h-11 rounded-full border-2 border-[#F5A623] object-cover" alt="Expert">
+                                <img src="{{ $pick->expert->photoUrl() }}" class="w-11 h-11 rounded-full border-2 border-[#F5A623] object-cover shrink-0" alt="{{ $pick->expert->name }}">
                                 <div>
                                     <div class="flex items-center space-x-2">
                                         <span class="font-extrabold text-sm text-white">{{ $pick->expert->name }}</span>
@@ -53,7 +59,7 @@
                             <!-- Fixture Info -->
                             <div class="text-left sm:text-right">
                                 <div class="text-xs text-slate-400">{{ $pick->match->league }}</div>
-                                <a href="{{ route('matches.show', $pick->match) }}" class="font-extrabold text-sm text-white hover:text-sky-400">
+                                <a href="{{ $pick->match->canonicalUrl() }}" class="font-extrabold text-sm text-white hover:text-sky-400">
                                     {{ $pick->match->home_team }} vs {{ $pick->match->away_team }}
                                 </a>
                             </div>

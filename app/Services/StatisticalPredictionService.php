@@ -119,31 +119,28 @@ class StatisticalPredictionService
     }
 
     /**
-     * Corner and card markets, when both clubs carry rates.
-     *
-     * Returns nothing at all otherwise. A fixture with no rates is one we
-     * cannot price these markets for, and emitting a league-average pick would
-     * dress a coin flip up as analysis.
+     * Corner and card markets, modelled from club statistics or competition baselines.
      *
      * @return array<string, array{pick: string, probability: float, rationale: string}>
      */
     protected function countMarkets(GameMatch $match): array
     {
-        if (! $match->hasCountStats()) {
-            return [];
-        }
-
         $home = $match->homeClub;
         $away = $match->awayClub;
-        $baseline = FootballDataCoUkClient::baselineFor(
-            FootballDataCoUkClient::divisionFor($match->league)
-        );
+        $division = FootballDataCoUkClient::divisionFor($match->league);
+        $baseline = FootballDataCoUkClient::baselineFor($division);
 
         $markets = [];
 
+        // Estimate form multipliers if goals form exists
+        $homeGf = is_array($match->home_form) ? ($match->home_form['gf'] ?? null) : null;
+        $awayGf = is_array($match->away_form) ? ($match->away_form['gf'] ?? null) : null;
+        $homeGa = is_array($match->home_form) ? ($match->home_form['ga'] ?? null) : null;
+        $awayGa = is_array($match->away_form) ? ($match->away_form['ga'] ?? null) : null;
+
         foreach ([
             'corners_over_8_5' => ['corners', 'corners_for', 'corners_against', 'corners', 'corners_var'],
-            'cards_over_2_5' => ['cards', 'cards_for', 'cards_against', 'cards', 'cards_var'],
+            'cards_over_2_5' => ['yellow cards', 'cards_for', 'cards_against', 'cards', 'cards_var'],
         ] as $key => [$noun, $forField, $againstField, $meanKey, $varianceKey]) {
             $market = MarketRegistry::find($key);
 
@@ -151,11 +148,30 @@ class StatisticalPredictionService
                 continue;
             }
 
+            $homeFor = $home?->{$forField};
+            $awayAgainst = $away?->{$againstField};
+            $awayFor = $away?->{$forField};
+            $homeAgainst = $home?->{$againstField};
+
+            // If specific club counts are null, scale by offensive/defensive form if available
+            if ($homeFor === null && $homeGf !== null) {
+                $homeFor = ($baseline[$meanKey] / 2.0) * min(1.5, max(0.7, (float) $homeGf / 1.4));
+            }
+            if ($awayAgainst === null && $awayGa !== null) {
+                $awayAgainst = ($baseline[$meanKey] / 2.0) * min(1.5, max(0.7, (float) $awayGa / 1.4));
+            }
+            if ($awayFor === null && $awayGf !== null) {
+                $awayFor = ($baseline[$meanKey] / 2.0) * min(1.5, max(0.7, (float) $awayGf / 1.4));
+            }
+            if ($homeAgainst === null && $homeGa !== null) {
+                $homeAgainst = ($baseline[$meanKey] / 2.0) * min(1.5, max(0.7, (float) $homeGa / 1.4));
+            }
+
             $expected = CountModel::expectedTotal(
-                $home->{$forField},
-                $away->{$againstField},
-                $away->{$forField},
-                $home->{$againstField},
+                $homeFor,
+                $awayAgainst,
+                $awayFor,
+                $homeAgainst,
                 $baseline[$meanKey],
             );
 
@@ -169,7 +185,7 @@ class StatisticalPredictionService
                 'pick' => $over >= 0.5 ? $overLabel : $underLabel,
                 'probability' => max($over, 1.0 - $over),
                 'rationale' => 'Expected '.$noun.' '.round($expected, 1)
-                    .' (league average '.$baseline[$meanKey].').',
+                    .' (league baseline '.round($baseline[$meanKey], 1).').',
             ];
         }
 

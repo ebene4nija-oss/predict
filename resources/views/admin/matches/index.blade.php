@@ -76,7 +76,10 @@
                             </td>
                             <td class="py-4 px-4 sm:px-6 text-right">
                                 <div class="flex items-center justify-end space-x-2">
-                                    <a href="{{ route('admin.matches.edit', $match) }}" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold border border-slate-700 transition-all">
+                                    <a href="{{ route('admin.previews.edit', $match) }}" class="px-2.5 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 text-xs font-semibold border border-sky-500/30 transition-all" title="Manage Preview & SEO">
+                                        📝 Preview
+                                    </a>
+                                    <a href="{{ route('admin.matches.edit', $match) }}" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition-all">
                                         Edit
                                     </a>
                                     <a href="{{ route('admin.matches.settle', $match) }}" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-semibold border border-emerald-500/30 transition-all">

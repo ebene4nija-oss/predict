@@ -3,7 +3,9 @@
 @php
     $adminTabs = [
         ['route' => 'admin.dashboard', 'pattern' => 'admin.dashboard', 'label' => 'Dashboard'],
+        ['route' => 'admin.pipeline.index', 'pattern' => 'admin.pipeline.*', 'label' => '⚡ Pipeline'],
         ['route' => 'admin.matches.index', 'pattern' => 'admin.matches.*', 'label' => 'Matches'],
+        ['route' => 'admin.previews.index', 'pattern' => 'admin.previews.*', 'label' => '📝 Previews'],
         ['route' => 'admin.predictions.index', 'pattern' => 'admin.predictions.*', 'label' => 'Predictions'],
         ['route' => 'admin.posts.index', 'pattern' => 'admin.posts.*', 'label' => 'News'],
         ['route' => 'admin.teams.index', 'pattern' => 'admin.teams.*', 'label' => 'Teams'],

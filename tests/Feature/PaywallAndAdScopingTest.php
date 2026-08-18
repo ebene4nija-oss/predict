@@ -86,4 +86,42 @@ class PaywallAndAdScopingTest extends TestCase
         $response->assertDontSee('Sponsored Advertisement');
         $response->assertDontSee('Gated for Pro Subscribers');
     }
+
+    public function test_free_user_or_guest_cannot_see_calculated_probabilities_on_match_preview(): void
+    {
+        $match = GameMatch::first();
+        $freeUser = User::factory()->create(['role' => 'free']);
+
+        // Guest check
+        $guestResponse = $this->get(route('matches.show', $match));
+        $guestResponse->assertOk();
+        $guestResponse->assertSee('Calculated Probabilities & xG Models Gated');
+        $guestResponse->assertSee('Upgrade to PRO to Unlock Calculated Probabilities');
+        $guestResponse->assertDontSee('GUARANTEED CORRECT CALCULATED PROBABILITIES');
+
+        // Free authenticated user check
+        $authResponse = $this->actingAs($freeUser)->get(route('matches.show', $match));
+        $authResponse->assertOk();
+        $authResponse->assertSee('Calculated Probabilities & xG Models Gated');
+        $authResponse->assertSee('Upgrade to PRO to Unlock Calculated Probabilities');
+        $authResponse->assertDontSee('GUARANTEED CORRECT CALCULATED PROBABILITIES');
+    }
+
+    public function test_active_subscriber_or_admin_can_see_calculated_probabilities_on_match_preview(): void
+    {
+        $match = GameMatch::first();
+        $subscriber = User::factory()->subscriber()->create();
+        Subscription::create([
+            'user_id' => $subscriber->id,
+            'gateway' => 'flutterwave',
+            'status' => 'active',
+            'plan' => 'monthly_pro',
+            'renews_at' => now()->addMonth(),
+        ]);
+
+        $response = $this->actingAs($subscriber)->get(route('matches.show', $match));
+        $response->assertOk();
+        $response->assertSee('GUARANTEED CORRECT CALCULATED PROBABILITIES');
+        $response->assertDontSee('Calculated Probabilities & xG Models Gated', false);
+    }
 }

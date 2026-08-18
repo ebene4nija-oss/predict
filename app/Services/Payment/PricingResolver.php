@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -50,7 +51,15 @@ class PricingResolver
      */
     public function amountFor(string $currency): float
     {
-        return (float) (config('pricing.prices.'.strtoupper($currency).'.amount') ?? 0.0);
+        $curr = strtoupper($currency);
+        $settingKey = 'price_' . strtolower($curr);
+        $stored = Setting::get($settingKey);
+
+        if ($stored !== null && is_numeric($stored) && (float) $stored > 0) {
+            return (float) $stored;
+        }
+
+        return (float) (config('pricing.prices.'.$curr.'.amount') ?? 0.0);
     }
 
     public function isSupportedCurrency(string $currency): bool
@@ -95,7 +104,9 @@ class PricingResolver
             }
         }
 
-        return [$this->normalise(config('pricing.default_country', 'NG')), false];
+        $defaultCountry = Setting::get('pricing_default_country') ?: config('pricing.default_country', 'NG');
+
+        return [$this->normalise((string) $defaultCountry), false];
     }
 
     protected function isKnown(string $country): bool

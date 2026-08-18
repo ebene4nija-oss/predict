@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('title', 'Privacy Policy — Guaranteed Correct')
+@section('meta_description', 'Privacy Policy describing data handling, user privacy protections, and security measures at Guaranteed Correct.')
+@section('canonical', route('legal.privacy'))
 
 @section('content')
 <x-legal-shell eyebrow="Legal" heading="Privacy Policy"

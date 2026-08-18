@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'How the AI Works — Guaranteed Correct Architecture')
+@section('title', 'How AI Football Predictions Work — Expected Goals (xG) Poisson Engine Explained')
+@section('meta_description', 'Detailed technical architecture of our deterministic Poisson xG probability engine and how dual AI systems generate synthetic precision football picks.')
+@section('meta_keywords', 'how football predictions work, Poisson distribution betting, expected goals xG model, AI football algorithm, sports prediction math, predictive modeling football')
+@section('canonical', route('how-ai-works'))
 
 @section('content')
     <div class="max-w-4xl mx-auto space-y-10 py-4">

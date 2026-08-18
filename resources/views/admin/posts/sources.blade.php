@@ -44,9 +44,8 @@
         <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 leading-relaxed space-y-2">
             <p>
                 <span class="font-bold text-slate-200">Feeds are a prompt, not a source of copy.</span>
-                The model is given a headline and summary and asked to write our own article about what the story means for
-                the fixtures and probabilities we publish. It is instructed not to paraphrase the original, not to quote it,
-                and to attribute claims to the publication by name. Each article links back to the original report.
+                The model is given a headline and summary and asked to write our own unique article about what the story means for
+                the fixtures and probabilities we publish. It writes original content — not a paraphrase or rewrite of the source.
             </p>
             <p>
                 Every story is written once — deduplicated on the feed's own entry id — and
@@ -58,8 +57,28 @@
                 Only use feeds you are entitled to monitor, and check the publisher's terms.
             </p>
             @unless($aiConfigured)
-                <p class="text-amber-400 font-semibold">No Claude API key is set, so polling will not write anything yet.</p>
+                <p class="text-amber-400 font-semibold">No AI API key is configured for {{ app(\App\Services\PostGenerationService::class)->provider() }} in Settings, so polling will not write articles yet.</p>
             @endunless
+        </div>
+
+        {{-- Recommended Football Feeds Quick Pack --}}
+        <div class="p-5 rounded-2xl bg-gradient-to-r from-sky-950/40 via-slate-900/80 to-indigo-950/40 border border-sky-500/30 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                        <span>⭐</span> Recommended Top Football RSS Feeds
+                    </h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5">
+                        High-authority, open football RSS feeds tested &amp; optimized for the AI Newsroom: <strong>BBC Sport</strong>, <strong>Sky Sports</strong>, <strong>The Guardian</strong>, <strong>ESPN FC</strong>, and <strong>TalkSport</strong>.
+                    </p>
+                </div>
+                <form action="{{ route('admin.sources.seed-defaults') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 transition-all whitespace-nowrap">
+                        ⚡ 1-Click Install Recommended Feeds
+                    </button>
+                </form>
+            </div>
         </div>
 
         {{-- Existing feeds --}}

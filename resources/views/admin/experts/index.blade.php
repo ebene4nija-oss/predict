@@ -36,8 +36,8 @@
                     <div class="p-5 rounded-2xl glass-panel border border-slate-800 space-y-4">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex items-center space-x-3">
-                                @if($expert->photo_path)
-                                    <img src="{{ $expert->photo_path }}" alt="{{ $expert->name }}" class="w-12 h-12 rounded-full object-cover border border-amber-500/40">
+                                @if($expert->photo_path || $expert->user?->avatar)
+                                    <img src="{{ $expert->photoUrl() }}" alt="{{ $expert->name }}" class="w-12 h-12 rounded-full object-cover border border-amber-500/40">
                                 @else
                                     <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-base">
                                         {{ strtoupper(substr($expert->name, 0, 2)) }}

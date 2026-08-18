@@ -36,16 +36,36 @@ class TelegramHandles
     /** The channel handle as displayed to users, with the leading "@". */
     public static function channelHandle(): string
     {
+        $raw = Setting::credential('telegram_channel_username', 'services.telegram.channel_username');
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            $path = parse_url($raw, PHP_URL_PATH);
+            return '@'.ltrim($path ?: $raw, '/@+');
+        }
+
         return '@'.static::channelUsername();
     }
 
     public static function botUrl(): string
     {
+        $raw = Setting::credential('telegram_bot_username', 'services.telegram.bot_username');
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            return $raw;
+        }
+
         return 'https://t.me/'.static::botUsername();
     }
 
     public static function channelUrl(): string
     {
+        $raw = Setting::credential('telegram_channel_username', 'services.telegram.channel_username');
+        if ($raw === '') {
+            return '';
+        }
+
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            return $raw;
+        }
+
         return 'https://t.me/'.static::channelUsername();
     }
 

@@ -154,4 +154,64 @@ class TelegramHandlesTest extends TestCase
             ->assertSee('SavedBot')
             ->assertSee('https://t.me/SavedSupport');
     }
+
+    public function test_vip_channel_banner_customization_renders_on_public_pages(): void
+    {
+        Setting::set('telegram_channel_username', 'CustomVipChannel');
+        Setting::set('telegram_banner_headline', 'Exclusive High Odds VIP Community');
+        Setting::set('telegram_banner_cta_text', 'Access VIP Now');
+        Setting::set('telegram_banner_badge', 'EXCLUSIVE VIP CLUB');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Exclusive High Odds VIP Community')
+            ->assertSee('Access VIP Now')
+            ->assertSee('EXCLUSIVE VIP CLUB')
+            ->assertSee('https://t.me/CustomVipChannel');
+    }
+
+    public function test_vip_channel_banner_can_be_disabled_by_admin(): void
+    {
+        Setting::set('telegram_channel_username', 'CustomVipChannel');
+        Setting::set('telegram_banner_enabled', '0');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('https://t.me/CustomVipChannel')
+            ->assertDontSee('Join VIP Channel');
+    }
+
+    public function test_channel_url_supports_full_invite_links(): void
+    {
+        Setting::set('telegram_channel_username', 'https://t.me/+joinPrivateVip');
+
+        $this->assertSame('https://t.me/+joinPrivateVip', TelegramHandles::channelUrl());
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('https://t.me/+joinPrivateVip');
+    }
+
+    public function test_telegram_banner_renders_on_news_and_prediction_pages(): void
+    {
+        Setting::set('telegram_channel_username', 'CustomVipChannel');
+
+        // Top Picks prediction page
+        $this->get(route('top.picks'))
+            ->assertOk()
+            ->assertSee('https://t.me/CustomVipChannel')
+            ->assertSee('Join VIP Channel');
+
+        // Match previews hub
+        $this->get(route('matches.index'))
+            ->assertOk()
+            ->assertSee('https://t.me/CustomVipChannel')
+            ->assertSee('Join VIP Channel');
+
+        // News index
+        $this->get(route('blog.index'))
+            ->assertOk()
+            ->assertSee('https://t.me/CustomVipChannel')
+            ->assertSee('Join VIP Channel');
+    }
 }
+

@@ -87,6 +87,13 @@ class IngestNewsFeedsJob implements ShouldQueue
 
             if ($post !== null) {
                 $written++;
+                Log::info('Newsroom article generated successfully', [
+                    'title' => $post->title,
+                    'slug' => $post->slug,
+                    'source' => $source->name,
+                    'provider' => $writer->provider(),
+                    'status' => $post->status,
+                ]);
             }
         }
 

@@ -78,6 +78,12 @@ class AdminMatchController extends Controller
             'h2h_summary' => 'nullable|string',
             'injury_notes' => 'nullable|string',
             'preview_text' => 'nullable|string',
+            'preview_headline' => 'nullable|string|max:255',
+            'seo_title' => 'nullable|string|max:255',
+            'seo_description' => 'nullable|string|max:500',
+            'seo_keywords' => 'nullable|string|max:500',
+            'preview_status' => 'nullable|in:published,draft',
+            'is_preview_custom' => 'nullable|boolean',
         ]);
 
         $match->update([
@@ -85,9 +91,15 @@ class AdminMatchController extends Controller
             'away_team' => $validated['away_team'],
             'league' => $validated['league'],
             'kickoff_at' => Carbon::parse($validated['kickoff_at']),
-            'h2h_summary' => $validated['h2h_summary'],
-            'injury_notes' => $validated['injury_notes'],
-            'preview_text' => $validated['preview_text'],
+            'h2h_summary' => $validated['h2h_summary'] ?? null,
+            'injury_notes' => $validated['injury_notes'] ?? null,
+            'preview_text' => $validated['preview_text'] ?? null,
+            'preview_headline' => $validated['preview_headline'] ?? $match->preview_headline,
+            'seo_title' => $validated['seo_title'] ?? $match->seo_title,
+            'seo_description' => $validated['seo_description'] ?? $match->seo_description,
+            'seo_keywords' => $validated['seo_keywords'] ?? $match->seo_keywords,
+            'preview_status' => $validated['preview_status'] ?? $match->preview_status ?? GameMatch::PREVIEW_STATUS_PUBLISHED,
+            'is_preview_custom' => $request->has('is_preview_custom') ? $request->boolean('is_preview_custom') : $match->is_preview_custom,
         ]);
 
         return redirect()->route('admin.matches.index')->with('success', 'Fixture details updated successfully!');
@@ -115,6 +127,10 @@ class AdminMatchController extends Controller
             // and a typo here would grade the first-half markets wrongly.
             'ht_home_score' => 'nullable|integer|min:0|lte:home_score',
             'ht_away_score' => 'nullable|integer|min:0|lte:away_score',
+            'home_corners' => 'nullable|integer|min:0|max:99',
+            'away_corners' => 'nullable|integer|min:0|max:99',
+            'home_yellows' => 'nullable|integer|min:0|max:99',
+            'away_yellows' => 'nullable|integer|min:0|max:99',
         ], [
             'ht_home_score.lte' => 'The half-time home score cannot exceed the full-time home score.',
             'ht_away_score.lte' => 'The half-time away score cannot exceed the full-time away score.',
@@ -129,6 +145,9 @@ class AdminMatchController extends Controller
         $htAway = $validated['ht_away_score'] ?? null;
         $hasHalfTime = $htHome !== null && $htAway !== null;
 
+        $hasCorners = ($validated['home_corners'] ?? null) !== null && ($validated['away_corners'] ?? null) !== null;
+        $hasYellows = ($validated['home_yellows'] ?? null) !== null && ($validated['away_yellows'] ?? null) !== null;
+
         Result::updateOrCreate(
             ['match_id' => $match->id],
             [
@@ -136,6 +155,10 @@ class AdminMatchController extends Controller
                 'away_score' => $a,
                 'ht_home_score' => $hasHalfTime ? (int) $htHome : null,
                 'ht_away_score' => $hasHalfTime ? (int) $htAway : null,
+                'home_corners' => $hasCorners ? (int) $validated['home_corners'] : null,
+                'away_corners' => $hasCorners ? (int) $validated['away_corners'] : null,
+                'home_yellows' => $hasYellows ? (int) $validated['home_yellows'] : null,
+                'away_yellows' => $hasYellows ? (int) $validated['away_yellows'] : null,
                 // actual_outcome is derived on save; see Result::booted().
                 'settled_at' => now(),
             ]

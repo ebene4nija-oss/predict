@@ -104,13 +104,20 @@ class AdminPostController extends Controller
             'brief' => 'nullable|string|max:1000',
         ]);
 
-        if (! app(PostGenerationService::class)->isConfigured()) {
-            return back()->with('warning', 'Add a Claude API key in Settings before generating articles.');
+        $writer = app(PostGenerationService::class);
+        if (! $writer->isConfigured()) {
+            return back()->with('warning', "Add a {$writer->provider()} API key in Settings before generating articles.");
         }
 
-        GeneratePostJob::dispatch($validated['category'], $validated['brief'] ?? null, $request->user()->id);
+        try {
+            GeneratePostJob::dispatchSync($validated['category'], $validated['brief'] ?? null, $request->user()->id);
 
-        return back()->with('success', 'Article generation queued. Refresh in a moment — it will appear as a draft for review.');
+            return back()->with('success', 'Article generated successfully! It is now available in drafts.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Article generation error: '.$e->getMessage());
+
+            return back()->with('warning', 'Article generation error: '.$e->getMessage());
+        }
     }
 
     /**

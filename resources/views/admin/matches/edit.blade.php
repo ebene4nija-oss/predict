@@ -19,6 +19,40 @@
             <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Edit Fixture: {{ $match->home_team }} vs {{ $match->away_team }}</h1>
             <p class="text-xs sm:text-sm text-slate-400 mt-1">Modify fixture parameters, kickoff schedule, or edit the AI-generated preview narrative.</p>
         </div>
+
+        <a href="{{ route('admin.previews.edit', $match) }}"
+           class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-sky-500/25 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            <span>📝 Open Preview & SEO Editor</span>
+        </a>
+    </div>
+
+    <!-- Match Preview Quick Status Banner -->
+    <div class="p-4 rounded-2xl glass-panel border border-sky-500/30 flex items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+                SEO
+            </div>
+            <div>
+                <div class="text-xs font-bold text-white">
+                    Preview Status:
+                    <span class="font-mono text-sky-400 uppercase">{{ $match->preview_source ?: 'None' }}</span>
+                    @if($match->isCustomPreview())
+                        <span class="ml-1 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px]">LOCKED</span>
+                    @endif
+                    ({{ $match->previewWordCount() }} words)
+                </div>
+                <div class="text-[11px] text-slate-400">
+                    {{ $match->seoTitle() }}
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ route('admin.previews.edit', $match) }}" class="text-xs font-extrabold text-[#38BDF8] hover:underline whitespace-nowrap">
+            Manage Full Preview & SEO &rarr;
+        </a>
     </div>
 
     <!-- Form Container -->

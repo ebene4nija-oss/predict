@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Official Expert Analyst Leaderboard — Guaranteed Correct')
+@section('title', 'Official Expert Analyst Leaderboard & Hit Rate Rankings — GUARANTEED CORRECT')
+@section('meta_description', 'Live performance rankings, strike rates, and audited settlement history for all verified football strategists and tipsters.')
+@section('meta_keywords', 'expert tipster rankings, football handicapper leaderboard, betting analyst win rate, verified tipsters, football prediction rankings')
+@section('canonical', route('expert.leaderboard'))
 
 @section('content')
     <div class="max-w-5xl mx-auto py-6 space-y-6">
@@ -40,7 +43,7 @@
                                 </td>
                                 <td class="py-4 px-4">
                                     <div class="flex items-center space-x-3">
-                                        <img src="{{ $expert->photo_path ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' }}" class="w-10 h-10 rounded-full border border-amber-500/30 object-cover" alt="{{ $expert->name }}">
+                                        <img src="{{ $expert->photoUrl() }}" class="w-10 h-10 rounded-full border border-amber-500/30 object-cover shrink-0" alt="{{ $expert->name }}">
                                         <div>
                                             <div class="font-bold text-white flex items-center space-x-1.5">
                                                 <span>{{ $expert->name }}</span>

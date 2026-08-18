@@ -19,6 +19,8 @@ class AdminCredentialsTest extends TestCase
     protected const CREDENTIALS = [
         'claude_api_key',
         'gemini_api_key',
+        'openai_api_key',
+        'kimi_api_key',
         'football_data_token',
         'telegram_bot_token',
         'telegram_webhook_secret',

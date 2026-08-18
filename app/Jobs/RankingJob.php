@@ -40,7 +40,17 @@ class RankingJob implements ShouldQueue
                 ->limit(10)
                 ->pluck('id');
 
+            $count = count($topIds);
             Prediction::whereIn('id', $topIds)->update(['is_top10' => true]);
+
+            if ($count > 0) {
+                \App\Support\PipelineProgress::line(sprintf(
+                    'Ranked %d top picks for %s (>= %d%% threshold)',
+                    $count,
+                    $definition->label,
+                    (int) round($threshold * 100)
+                ));
+            }
         }
     }
 }

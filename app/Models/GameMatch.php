@@ -41,6 +41,12 @@ class GameMatch extends Model
     /** Boilerplate, written because the model was unreachable. */
     public const PREVIEW_SOURCE_FALLBACK = 'fallback';
 
+    /** Manually curated or edited by an admin. */
+    public const PREVIEW_SOURCE_CUSTOM = 'custom';
+
+    public const PREVIEW_STATUS_PUBLISHED = 'published';
+    public const PREVIEW_STATUS_DRAFT = 'draft';
+
     protected $fillable = [
         'external_id',
         'provider',
@@ -56,9 +62,15 @@ class GameMatch extends Model
         'h2h_summary',
         'injury_notes',
         'preview_text',
+        'preview_headline',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
         'preview_generated_at',
         'preview_refreshed_at',
         'preview_source',
+        'preview_status',
+        'is_preview_custom',
     ];
 
     protected $casts = [
@@ -67,7 +79,25 @@ class GameMatch extends Model
         'away_form' => 'array',
         'preview_generated_at' => 'datetime',
         'preview_refreshed_at' => 'datetime',
+        'is_preview_custom' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (GameMatch $match) {
+            if (blank($match->home_team_id) && filled($match->home_team)) {
+                $team = Team::where('name', $match->home_team)->first()
+                    ?? Team::create(['name' => $match->home_team, 'provider' => $match->provider ?: 'manual']);
+                $match->home_team_id = $team->id;
+            }
+
+            if (blank($match->away_team_id) && filled($match->away_team)) {
+                $team = Team::where('name', $match->away_team)->first()
+                    ?? Team::create(['name' => $match->away_team, 'provider' => $match->provider ?: 'manual']);
+                $match->away_team_id = $team->id;
+            }
+        });
+    }
 
     /**
      * How many days ahead the platform ingests fixtures and publishes previews.
@@ -121,10 +151,13 @@ class GameMatch extends Model
      * Three reasons to write, and nothing else: it has never been written; the
      * last attempt fell back to boilerplate because the model was unreachable;
      * or it is now close enough to kickoff for its one refresh on settled data.
+     *
+     * Manually authored or locked previews (is_preview_custom = true) are never
+     * overwritten by the automated background pipeline.
      */
     public function needsPreview(): bool
     {
-        if ($this->hasStarted()) {
+        if ($this->hasStarted() || $this->is_preview_custom) {
             return false;
         }
 
@@ -183,9 +216,170 @@ class GameMatch extends Model
      */
     public function previewIsPublishable(): bool
     {
+        if ($this->preview_status === self::PREVIEW_STATUS_DRAFT) {
+            return false;
+        }
+
         return filled($this->preview_text)
             && $this->kickoff_at !== null
             && $this->kickoff_at->lte(now()->addDays(self::previewLeadDays())->endOfDay());
+    }
+
+    /**
+     * Effective SEO Title for the match preview.
+     */
+    public function seoTitle(): string
+    {
+        if (filled($this->seo_title)) {
+            return $this->seo_title;
+        }
+
+        return "{$this->home_team} vs {$this->away_team} Prediction, H2H & AI Match Preview — {$this->league}";
+    }
+
+    /**
+     * Effective SEO Meta Description.
+     */
+    public function seoDescription(): string
+    {
+        if (filled($this->seo_description)) {
+            return $this->seo_description;
+        }
+
+        $date = $this->kickoff_at ? $this->kickoff_at->format('M d, Y H:i') : 'upcoming';
+
+        return "Comprehensive {$this->home_team} vs {$this->away_team} prediction, Poisson expected-goals (xG) statistics, tactical preview, and betting odds breakdown for {$this->league} kickoff {$date}.";
+    }
+
+    /**
+     * SEO-friendly URL Slug.
+     */
+    public function slug(): string
+    {
+        return \Illuminate\Support\Str::slug("{$this->home_team}-vs-{$this->away_team}-prediction-{$this->league}");
+    }
+
+    /**
+     * Canonical Absolute URL.
+     */
+    public function canonicalUrl(): string
+    {
+        return route('matches.show', ['match' => $this->id, 'slug' => $this->slug()]);
+    }
+
+    /**
+     * Effective SEO Focus Keywords.
+     */
+    public function seoKeywords(): string
+    {
+        if (filled($this->seo_keywords)) {
+            return $this->seo_keywords;
+        }
+
+        return strtolower("{$this->home_team} vs {$this->away_team} prediction, {$this->home_team} vs {$this->away_team} betting tips, {$this->league} AI preview, expected goals xG breakdown, football match analysis");
+    }
+
+    /**
+     * Editorial Preview Headline.
+     */
+    public function previewHeadline(): string
+    {
+        if (filled($this->preview_headline)) {
+            return $this->preview_headline;
+        }
+
+        return "{$this->home_team} vs {$this->away_team} Prediction & Tactical Match Preview";
+    }
+
+    /**
+     * Preview word count.
+     */
+    public function previewWordCount(): int
+    {
+        if (blank($this->preview_text)) {
+            return 0;
+        }
+
+        return str_word_count(strip_tags($this->preview_text));
+    }
+
+    /**
+     * Estimated reading minutes.
+     */
+    public function previewReadingMinutes(): int
+    {
+        $words = $this->previewWordCount();
+
+        return max(1, (int) ceil($words / 200));
+    }
+
+    /**
+     * Clean plain text excerpt of preview, stripped of markdown headings.
+     */
+    public function previewExcerpt(int $limit = 180): string
+    {
+        if (blank($this->preview_text)) {
+            return "Detailed tactical match preview, head-to-head records, and AI model probability analysis for {$this->home_team} vs {$this->away_team}.";
+        }
+
+        $plain = preg_replace('/^#+\s+.*$/m', '', $this->preview_text);
+        $plain = preg_replace('/[*_`>#-]/', '', (string) $plain);
+        $plain = trim((string) preg_replace('/\s+/', ' ', (string) $plain));
+
+        return \Illuminate\Support\Str::limit($plain ?: "Detailed tactical analysis for {$this->home_team} vs {$this->away_team}.", $limit);
+    }
+
+    /**
+     * Whether preview is customized by human admin.
+     */
+    public function isCustomPreview(): bool
+    {
+        return (bool) $this->is_preview_custom;
+    }
+
+    /**
+     * Whether preview is in draft state.
+     */
+    public function isDraftPreview(): bool
+    {
+        return $this->preview_status === self::PREVIEW_STATUS_DRAFT;
+    }
+
+    /**
+     * Filter by search term across teams or league.
+     */
+    public function scopeSearchMatches(Builder $query, ?string $search): Builder
+    {
+        if (blank($search)) {
+            return $query;
+        }
+
+        $search = trim($search);
+
+        return $query->where(function (Builder $q) use ($search) {
+            $q->where('home_team', 'like', "%{$search}%")
+                ->orWhere('away_team', 'like', "%{$search}%")
+                ->orWhere('league', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * Filter by preview state / source.
+     */
+    public function scopeWithPreviewFilter(Builder $query, ?string $filter): Builder
+    {
+        return match ($filter) {
+            'missing' => $query->where(function ($q) {
+                $q->whereNull('preview_text')->orWhere('preview_text', '');
+            }),
+            'has_preview' => $query->whereNotNull('preview_text')->where('preview_text', '!=', ''),
+            'gemini' => $query->where('preview_source', self::PREVIEW_SOURCE_MODEL),
+            'fallback' => $query->where('preview_source', self::PREVIEW_SOURCE_FALLBACK),
+            'custom' => $query->where('is_preview_custom', true),
+            'draft' => $query->where('preview_status', self::PREVIEW_STATUS_DRAFT),
+            'published' => $query->where('preview_status', self::PREVIEW_STATUS_PUBLISHED),
+            default => $query,
+        };
     }
 
     public function homeClub(): BelongsTo

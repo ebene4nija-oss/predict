@@ -116,15 +116,16 @@ class CountMarketsTest extends TestCase
         $this->assertFalse($home->hasCountStats());
     }
 
-    public function test_count_markets_are_produced_only_when_both_clubs_have_rates(): void
+    public function test_count_markets_are_produced_with_baseline_and_refined_with_team_rates(): void
     {
         [$home, $away] = $this->seedClubs();
         $match = $this->fixture($home, $away);
         $this->fakeCsv();
 
-        // Before rates exist: no corner or card pick.
+        // Before rates exist: baseline/form-based picks are generated
         app(PredictionService::class)->calculateAndStore($match);
-        $this->assertDatabaseMissing('predictions', ['match_id' => $match->id, 'market' => 'corners_over_8_5']);
+        $this->assertDatabaseHas('predictions', ['match_id' => $match->id, 'market' => 'corners_over_8_5']);
+        $this->assertDatabaseHas('predictions', ['match_id' => $match->id, 'market' => 'cards_over_2_5']);
 
         app(MatchStatsService::class)->refreshTeamRates();
         Prediction::where('match_id', $match->id)->delete();
@@ -140,12 +141,7 @@ class CountMarketsTest extends TestCase
         $this->assertGreaterThan(0.5, $corners->probability, 'the published probability is that of the tipped side');
     }
 
-    /**
-     * The Champions League gap. The CSVs are domestic, so a fixture involving a
-     * club with no file gets every other market and neither count market —
-     * rather than a corner pick built on a league average.
-     */
-    public function test_a_fixture_with_an_unmapped_club_gets_no_count_markets(): void
+    public function test_a_fixture_with_an_unmapped_club_still_gets_baseline_count_markets(): void
     {
         [$home] = $this->seedClubs();
         $european = Team::create(['name' => 'Galatasaray SK', 'provider' => 'football-data', 'external_id' => '999']);
@@ -170,8 +166,8 @@ class CountMarketsTest extends TestCase
 
         $this->assertContains('win', $markets->all());
         $this->assertContains('ht_win', $markets->all());
-        $this->assertNotContains('corners_over_8_5', $markets->all());
-        $this->assertNotContains('cards_over_2_5', $markets->all());
+        $this->assertContains('corners_over_8_5', $markets->all());
+        $this->assertContains('cards_over_2_5', $markets->all());
     }
 
     public function test_finished_fixtures_are_settled_with_corner_and_card_totals(): void

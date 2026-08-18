@@ -21,7 +21,9 @@ class IntegrationTester
 {
     public const SERVICES = [
         'claude' => 'Claude / Anthropic',
+        'openai' => 'ChatGPT / OpenAI',
         'gemini' => 'Gemini',
+        'kimi' => 'Moonshot / Kimi',
         'football_data' => 'football-data.org',
         'telegram' => 'Telegram Bot',
         'flutterwave' => 'Flutterwave',
@@ -33,13 +35,43 @@ class IntegrationTester
     {
         return match ($service) {
             'claude' => $this->claude(),
+            'openai' => $this->openai(),
             'gemini' => $this->gemini(),
+            'kimi' => $this->kimi(),
             'football_data' => $this->footballData(),
             'telegram' => $this->telegram(),
             'flutterwave' => $this->flutterwave(),
             'paypal' => $this->paypal(),
             default => $this->fail('Unknown integration.'),
         };
+    }
+
+    protected function openai(): array
+    {
+        $key = Setting::credential('openai_api_key', 'services.openai.key');
+
+        if ($key === '') {
+            return $this->fail('No API key set.');
+        }
+
+        return $this->call(
+            fn () => Http::withToken($key)->timeout(15)->get('https://api.openai.com/v1/models'),
+            fn ($r) => 'Key valid. '.count($r->json('data', [])).' models available.',
+        );
+    }
+
+    protected function kimi(): array
+    {
+        $key = Setting::credential('kimi_api_key', 'services.kimi.key');
+
+        if ($key === '') {
+            return $this->fail('No API key set.');
+        }
+
+        return $this->call(
+            fn () => Http::withToken($key)->timeout(15)->get('https://api.moonshot.cn/v1/models'),
+            fn ($r) => 'Key valid. '.count($r->json('data', [])).' models available.',
+        );
     }
 
     protected function claude(): array

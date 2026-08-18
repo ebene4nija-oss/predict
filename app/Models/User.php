@@ -21,6 +21,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'role',
+        'avatar',
         'telegram_chat_id',
         'telegram_notifications_enabled',
         'telegram_link_token',
@@ -57,6 +58,38 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isExpert(): bool
     {
         return $this->role === 'expert' || $this->role === 'admin';
+    }
+
+    /**
+     * Only admins and verified experts are permitted to set their profile photo.
+     */
+    public function canSetProfilePhoto(): bool
+    {
+        return $this->isAdmin() || $this->isExpert();
+    }
+
+    /**
+     * URL for user profile picture / avatar.
+     */
+    public function avatarUrl(): ?string
+    {
+        if (filled($this->avatar)) {
+            if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
+                return $this->avatar;
+            }
+
+            return asset('storage/' . ltrim($this->avatar, '/'));
+        }
+
+        if ($this->expert && filled($this->expert->photo_path)) {
+            if (str_starts_with($this->expert->photo_path, 'http://') || str_starts_with($this->expert->photo_path, 'https://')) {
+                return $this->expert->photo_path;
+            }
+
+            return asset('storage/' . ltrim($this->expert->photo_path, '/'));
+        }
+
+        return null;
     }
 
     /**

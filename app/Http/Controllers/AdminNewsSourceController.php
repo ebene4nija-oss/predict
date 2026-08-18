@@ -84,13 +84,79 @@ class AdminNewsSourceController extends Controller
      */
     public function poll(Request $request, ?NewsSource $source = null)
     {
-        if (! app(PostGenerationService::class)->isConfigured()) {
-            return back()->with('warning', 'Add a Claude API key in Settings before polling feeds.');
+        $writer = app(PostGenerationService::class);
+        if (! $writer->isConfigured()) {
+            return back()->with('warning', "⚠️ No API key configured for {$writer->provider()} in Settings > Section 1 (Core Credentials). Please save your {$writer->provider()} API key to generate articles.");
         }
 
-        IngestNewsFeedsJob::dispatch($source?->id);
+        try {
+            IngestNewsFeedsJob::dispatchSync($source?->id);
 
-        return back()->with('success', 'Feed poll queued. New stories will appear in the newsroom shortly.');
+            return back()->with('success', 'Feed poll completed! Newly generated articles are available in the Newsroom.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Feed poll error: '.$e->getMessage());
+
+            return back()->with('warning', 'Feed poll error: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Pre-populate / seed recommended top football news RSS feeds with 1-click.
+     */
+    public function seedDefaults()
+    {
+        $defaults = [
+            [
+                'name' => 'BBC Sport Football',
+                'feed_url' => 'https://feeds.bbci.co.uk/sport/football/rss.xml',
+                'category' => 'news',
+                'max_per_run' => 2,
+                'max_age_hours' => 48,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Sky Sports Football',
+                'feed_url' => 'https://www.skysports.com/rss/12040',
+                'category' => 'news',
+                'max_per_run' => 2,
+                'max_age_hours' => 48,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'The Guardian Football',
+                'feed_url' => 'https://www.theguardian.com/football/rss',
+                'category' => 'analysis',
+                'max_per_run' => 2,
+                'max_age_hours' => 48,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'ESPN FC Soccer',
+                'feed_url' => 'https://www.espn.com/espn/rss/soccer/news',
+                'category' => 'news',
+                'max_per_run' => 2,
+                'max_age_hours' => 48,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'TalkSport Football',
+                'feed_url' => 'https://talksport.com/football/feed/',
+                'category' => 'news',
+                'max_per_run' => 2,
+                'max_age_hours' => 48,
+                'is_active' => true,
+            ],
+        ];
+
+        $added = 0;
+        foreach ($defaults as $feed) {
+            if (! NewsSource::where('feed_url', $feed['feed_url'])->exists()) {
+                NewsSource::create($feed);
+                $added++;
+            }
+        }
+
+        return back()->with('success', "{$added} recommended football RSS feed(s) added successfully.");
     }
 
     /**

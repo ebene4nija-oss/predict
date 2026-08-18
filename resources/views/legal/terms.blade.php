@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('title', 'Terms of Service — Guaranteed Correct')
+@section('meta_description', 'Official Terms of Service governing the use of the Guaranteed Correct football prediction and analytical platform.')
+@section('canonical', route('legal.terms'))
 
 @section('content')
 <x-legal-shell eyebrow="Legal" heading="Terms of Service"

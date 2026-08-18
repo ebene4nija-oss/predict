@@ -1,7 +1,9 @@
 @extends('layouts.app')
 
-@section('title', $post->title . ' — Guaranteed Correct')
+@section('title', $post->title . ' — GUARANTEED CORRECT Newsroom')
 @section('meta_description', $post->meta_description ?: $post->summary(160))
+@section('canonical', route('blog.show', $post))
+@section('og_type', 'article')
 
 @if($post->og_image)
     @section('og_image', $post->og_image)
@@ -11,26 +13,59 @@
     <script type="application/ld+json">
         {!! json_encode([
             '@context' => 'https://schema.org',
-            '@type' => 'NewsArticle',
-            'headline' => $post->title,
-            'description' => $post->meta_description ?: $post->summary(160),
-            'datePublished' => $post->published_at?->toIso8601String(),
-            'dateModified' => $post->updated_at?->toIso8601String(),
-            'author' => [
-                '@type' => $post->isAiWritten() ? 'Organization' : 'Person',
-                'name' => $post->isAiWritten()
-                    ? 'Guaranteed Correct AI Newsroom'
-                    : ($post->author?->name ?? 'Guaranteed Correct Editorial'),
-            ],
-            'publisher' => [
-                '@type' => 'Organization',
-                'name' => 'Guaranteed Correct',
+            '@graph' => [
+                [
+                    '@type' => 'BreadcrumbList',
+                    'itemListElement' => [
+                        [
+                            '@type' => 'ListItem',
+                            'position' => 1,
+                            'name' => 'Home',
+                            'item' => route('home'),
+                        ],
+                        [
+                            '@type' => 'ListItem',
+                            'position' => 2,
+                            'name' => 'News',
+                            'item' => route('blog.index'),
+                        ],
+                        [
+                            '@type' => 'ListItem',
+                            'position' => 3,
+                            'name' => $post->title,
+                            'item' => route('blog.show', $post),
+                        ],
+                    ],
+                ],
+                [
+                    '@type' => 'NewsArticle',
+                    'headline' => $post->title,
+                    'description' => $post->meta_description ?: $post->summary(160),
+                    'datePublished' => $post->published_at?->toIso8601String(),
+                    'dateModified' => $post->updated_at?->toIso8601String(),
+                    'author' => [
+                        '@type' => $post->isAiWritten() ? 'Organization' : 'Person',
+                        'name' => $post->isAiWritten()
+                            ? 'Guaranteed Correct AI Newsroom'
+                            : ($post->author?->name ?? 'Guaranteed Correct Editorial'),
+                    ],
+                    'publisher' => [
+                        '@type' => 'Organization',
+                        'name' => 'Guaranteed Correct',
+                    ],
+                    'mainEntityOfPage' => [
+                        '@type' => 'WebPage',
+                        '@id' => route('blog.show', $post),
+                    ],
+                ],
             ],
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
 @endsection
 
 @section('content')
+    <x-ad-banner type="header" />
+
     <div class="max-w-3xl mx-auto space-y-8 py-4">
         <a href="{{ route('blog.index') }}" class="text-xs font-bold text-slate-400 hover:text-sky-400">&larr; All news</a>
 
@@ -61,31 +96,6 @@
                 </div>
             </header>
 
-            {{-- Disclosure. The platform already labels AI predictions against
-                 expert picks; the same rule has to hold for editorial copy. --}}
-            @if($post->isAiWritten())
-                <div class="p-4 rounded-2xl bg-[#38BDF8]/5 border border-[#38BDF8]/20 text-[11px] text-slate-400 leading-relaxed">
-                    This article was drafted by an AI model ({{ $post->ai_model ?: 'Claude' }}) from the platform's own fixture
-                    data and published probabilities. It is commentary, not advice, and nothing here is a guaranteed outcome.
-                </div>
-            @endif
-
-            {{-- Credit for the report this article responds to. Kept above the
-                 body so a reader sees whose reporting it rests on before they
-                 read our take on it. --}}
-            @if($post->hasOrigin())
-                <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
-                    Written in response to reporting by
-                    <span class="font-semibold text-slate-200">{{ $post->origin_name }}</span>.
-                    @if($post->origin_url)
-                        <a href="{{ $post->origin_url }}" target="_blank" rel="noopener nofollow"
-                           class="text-[#38BDF8] hover:underline font-semibold">
-                            Read the original{{ $post->originDomain() ? ' at '.$post->originDomain() : '' }} &rarr;
-                        </a>
-                    @endif
-                </div>
-            @endif
-
             {{-- Escaped and split on blank lines: article bodies are plain text
                  by design, so no author or model can inject markup. --}}
             <div class="space-y-5 text-[15px] leading-relaxed text-slate-300">
@@ -95,9 +105,15 @@
             </div>
         </article>
 
+        <!-- Official Telegram Community Banner -->
+        <x-telegram-banner />
+
         <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-500 leading-relaxed">
             18+. Betting involves risk and no prediction is certain. Never stake more than you can afford to lose.
         </div>
+
+        <!-- In-Content Ad Placement -->
+        <x-ad-banner type="in-content" />
 
         @if($related->isNotEmpty())
             <div class="space-y-4">

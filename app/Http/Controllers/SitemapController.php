@@ -9,9 +9,9 @@ class SitemapController extends Controller
 {
     public function sitemapXml()
     {
-        $matches = GameMatch::select('id', 'updated_at', 'kickoff_at')
+        $matches = GameMatch::select('id', 'home_team', 'away_team', 'league', 'updated_at', 'kickoff_at')
             ->orderBy('kickoff_at', 'desc')
-            ->take(200)
+            ->take(250)
             ->get();
 
         $urls = [
@@ -28,35 +28,52 @@ class SitemapController extends Controller
                 'priority' => '0.9',
             ],
             [
-                'loc' => route('expert.picks'),
+                'loc' => route('matches.index'),
                 'lastmod' => now()->toIso8601String(),
-                'changefreq' => 'daily',
-                'priority' => '0.8',
+                'changefreq' => 'hourly',
+                'priority' => '0.9',
             ],
-            [
-                'loc' => route('expert.leaderboard'),
+        ];
+
+        // All 7 listed prediction markets as dedicated indexable landing pages
+        foreach (\App\Support\MarketRegistry::listed() as $marketKey => $marketDef) {
+            $urls[] = [
+                'loc' => route('top.picks', ['market' => $marketKey]),
                 'lastmod' => now()->toIso8601String(),
-                'changefreq' => 'daily',
-                'priority' => '0.8',
-            ],
-            [
-                'loc' => route('track-record'),
-                'lastmod' => now()->toIso8601String(),
-                'changefreq' => 'daily',
-                'priority' => '0.7',
-            ],
-            [
-                'loc' => route('how-ai-works'),
-                'lastmod' => now()->startOfMonth()->toIso8601String(),
-                'changefreq' => 'monthly',
-                'priority' => '0.6',
-            ],
-            [
-                'loc' => route('subscription.pricing'),
-                'lastmod' => now()->startOfMonth()->toIso8601String(),
-                'changefreq' => 'weekly',
-                'priority' => '0.7',
-            ],
+                'changefreq' => 'hourly',
+                'priority' => '0.9',
+            ];
+        }
+
+        $urls[] = [
+            'loc' => route('expert.picks'),
+            'lastmod' => now()->toIso8601String(),
+            'changefreq' => 'daily',
+            'priority' => '0.8',
+        ];
+        $urls[] = [
+            'loc' => route('expert.leaderboard'),
+            'lastmod' => now()->toIso8601String(),
+            'changefreq' => 'daily',
+            'priority' => '0.8',
+        ];
+        $urls[] = [
+            'loc' => route('track-record'),
+            'lastmod' => now()->toIso8601String(),
+            'changefreq' => 'daily',
+            'priority' => '0.7',
+        ];
+        $urls[] = [
+            'loc' => route('how-ai-works'),
+            'lastmod' => now()->startOfMonth()->toIso8601String(),
+            'changefreq' => 'monthly',
+            'priority' => '0.6',
+        ];
+        $urls[] = [
+            'loc' => route('subscription.pricing'),
+            'lastmod' => now()->startOfMonth()->toIso8601String(),
+            'changefreq' => 'weekly',
+            'priority' => '0.7',
         ];
 
         // Legal pages: rarely change, but they need to be indexable — payment
@@ -88,9 +105,10 @@ class SitemapController extends Controller
             ];
         }
 
+        // Match previews with keyword-rich semantic slugs
         foreach ($matches as $match) {
             $urls[] = [
-                'loc' => route('matches.show', $match->id),
+                'loc' => $match->canonicalUrl(),
                 'lastmod' => $match->updated_at ? $match->updated_at->toIso8601String() : now()->toIso8601String(),
                 'changefreq' => 'daily',
                 'priority' => '0.8',

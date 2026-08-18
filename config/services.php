@@ -39,10 +39,23 @@ return [
         'key' => env('GEMINI_API_KEY'),
         // Bootstrap default only; the admin dashboard value wins once set.
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'prediction_model' => env('GEMINI_PREDICTION_MODEL', 'gemini-2.5-flash'),
     ],
 
     'claude' => [
         'key' => env('CLAUDE_API_KEY'),
+        'model' => env('CLAUDE_MODEL', 'claude-opus-5'),
+        'effort' => env('CLAUDE_EFFORT', 'medium'),
+    ],
+
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o'),
+    ],
+
+    'kimi' => [
+        'key' => env('KIMI_API_KEY'),
+        'model' => env('KIMI_MODEL', 'moonshot-v1-8k'),
     ],
 
     'fixtures' => [
@@ -64,6 +77,7 @@ return [
     'flutterwave' => [
         'secret_key' => env('FLUTTERWAVE_SECRET_KEY'),
         'public_key' => env('FLUTTERWAVE_PUBLIC_KEY'),
+        'encryption_key' => env('FLUTTERWAVE_ENCRYPTION_KEY'),
         // Secret hash configured on the Flutterwave dashboard; sent back as the
         // `verif-hash` header on every webhook.
         'webhook_hash' => env('FLUTTERWAVE_WEBHOOK_HASH', ''),

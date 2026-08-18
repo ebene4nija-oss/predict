@@ -36,7 +36,7 @@ class SubscriptionController extends Controller
         };
 
         $url = $gateway === 'paypal'
-            ? $ppService->createSubscriptionLink($user)
+            ? $ppService->createSubscriptionLink($user, $resolved['amount'], $resolved['currency'])
             : $flwService->createSubscriptionLink($user, $resolved['amount'], $resolved['currency']);
 
         if (! $url) {

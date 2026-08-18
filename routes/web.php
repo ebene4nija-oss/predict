@@ -16,11 +16,13 @@ use Illuminate\Support\Facades\Route;
 
 // Public Pages
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/matches/{match}', [MatchController::class, 'show'])->name('matches.show');
+Route::get('/matches', [MatchController::class, 'index'])->name('matches.index');
+Route::get('/match-previews', [MatchController::class, 'index'])->name('matches.previews');
+Route::get('/matches/{match}/{slug?}', [MatchController::class, 'show'])->name('matches.show');
 Route::get('/how-ai-works', [HomeController::class, 'howAiWorks'])->name('how-ai-works');
 Route::get('/track-record', [TrackRecordController::class, 'index'])->name('track-record');
 Route::get('/subscribe', [SubscriptionController::class, 'pricing'])->name('subscription.pricing');
-Route::get('/top-picks', [PredictionController::class, 'topPicks'])->name('top.picks');
+Route::get('/top-picks/{market?}', [PredictionController::class, 'topPicks'])->name('top.picks');
 Route::get('/expert-picks', [ExpertController::class, 'index'])->name('expert.picks');
 Route::get('/expert-leaderboard', [ExpertController::class, 'leaderboard'])->name('expert.leaderboard');
 
@@ -66,6 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
     Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('subscription.callback');
     Route::get('/account', [SubscriptionController::class, 'account'])->name('account');
+    Route::post('/account/avatar', [\App\Http\Controllers\ProfileController::class, 'updateAvatar'])->name('account.avatar');
     Route::post('/cancel-subscription', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
     
     // Expert Submission Portal
@@ -93,7 +96,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/analytics', [\App\Http\Controllers\AdminAnalyticsController::class, 'index'])->name('admin.analytics.index');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
-    Route::post('/pipeline/run', [AdminController::class, 'runPipeline'])->name('admin.pipeline.run');
+    // Pipeline runs, with a live transcript the admin can watch while it works.
+    Route::get('/pipeline', [\App\Http\Controllers\AdminPipelineController::class, 'index'])->name('admin.pipeline.index');
+    Route::post('/pipeline/run', [\App\Http\Controllers\AdminPipelineController::class, 'run'])->name('admin.pipeline.run');
+    Route::get('/pipeline/runs/{run}', [\App\Http\Controllers\AdminPipelineController::class, 'show'])->name('admin.pipeline.show');
+    Route::get('/pipeline/runs/{run}/lines', [\App\Http\Controllers\AdminPipelineController::class, 'lines'])->name('admin.pipeline.lines');
+    Route::post('/pipeline/runs/{run}/drain', [\App\Http\Controllers\AdminPipelineController::class, 'drain'])->name('admin.pipeline.drain');
 
     // System maintenance, for hosts with no shell access
     Route::get('/system', [\App\Http\Controllers\AdminSystemController::class, 'index'])->name('admin.system');
@@ -110,6 +118,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/matches/{match}', [\App\Http\Controllers\AdminMatchController::class, 'destroy'])->name('admin.matches.destroy');
     Route::get('/matches/{match}/settle', [\App\Http\Controllers\AdminMatchController::class, 'showSettleForm'])->name('admin.matches.settle');
     Route::post('/matches/{match}/settle', [\App\Http\Controllers\AdminMatchController::class, 'settleResult'])->name('admin.matches.settle.store');
+
+    // Match Previews & SEO Manager
+    Route::get('/previews', [\App\Http\Controllers\AdminPreviewController::class, 'index'])->name('admin.previews.index');
+    Route::get('/previews/{match}/edit', [\App\Http\Controllers\AdminPreviewController::class, 'edit'])->name('admin.previews.edit');
+    Route::put('/previews/{match}', [\App\Http\Controllers\AdminPreviewController::class, 'update'])->name('admin.previews.update');
+    Route::post('/previews/{match}/generate', [\App\Http\Controllers\AdminPreviewController::class, 'generate'])->name('admin.previews.generate');
+    Route::post('/previews/bulk-generate', [\App\Http\Controllers\AdminPreviewController::class, 'bulkGenerate'])->name('admin.previews.bulk-generate');
+    Route::post('/previews/{match}/toggle', [\App\Http\Controllers\AdminPreviewController::class, 'togglePublish'])->name('admin.previews.toggle');
 
     // Prediction Override Manager
     Route::get('/predictions', [\App\Http\Controllers\AdminPredictionController::class, 'index'])->name('admin.predictions.index');
@@ -142,10 +158,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // RSS Newswire — feeds the AI newsroom writes in response to
     Route::get('/news-sources', [\App\Http\Controllers\AdminNewsSourceController::class, 'index'])->name('admin.sources.index');
     Route::post('/news-sources', [\App\Http\Controllers\AdminNewsSourceController::class, 'store'])->name('admin.sources.store');
+    Route::post('/news-sources/seed-defaults', [\App\Http\Controllers\AdminNewsSourceController::class, 'seedDefaults'])->name('admin.sources.seed-defaults');
     Route::put('/news-sources/{source}', [\App\Http\Controllers\AdminNewsSourceController::class, 'update'])->name('admin.sources.update');
     Route::delete('/news-sources/{source}', [\App\Http\Controllers\AdminNewsSourceController::class, 'destroy'])->name('admin.sources.destroy');
     Route::post('/news-sources/{source}/preview', [\App\Http\Controllers\AdminNewsSourceController::class, 'preview'])->name('admin.sources.preview');
-    Route::post('/news-sources/{source}/poll', [\App\Http\Controllers\AdminNewsSourceController::class, 'poll'])->name('admin.sources.poll');
+    Route::post('/news-sources/{source?}/poll', [\App\Http\Controllers\AdminNewsSourceController::class, 'poll'])->name('admin.sources.poll');
     Route::post('/news-sources/poll-all', [\App\Http\Controllers\AdminNewsSourceController::class, 'poll'])->name('admin.sources.poll-all');
 
     // Team Crest Library

@@ -27,4 +27,24 @@ class Expert extends Model
     {
         return $this->hasMany(ExpertPick::class);
     }
+
+    /**
+     * Resolves the expert photo URL.
+     */
+    public function photoUrl(): string
+    {
+        if (filled($this->photo_path)) {
+            if (str_starts_with($this->photo_path, 'http://') || str_starts_with($this->photo_path, 'https://')) {
+                return $this->photo_path;
+            }
+
+            return asset('storage/' . ltrim($this->photo_path, '/'));
+        }
+
+        if ($this->user && filled($this->user->avatar)) {
+            return $this->user->avatarUrl() ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
+        }
+
+        return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
+    }
 }
